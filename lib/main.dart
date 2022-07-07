@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/splash_screen.dart';
-
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
-
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +40,6 @@ class LDPGateway extends StatelessWidget {
           primarySwatch: appSwatch,
         ),
         routes: Routes.routes,
-        home: SplashScreen()
-    );
+        home: SplashScreen());
   }
 }
