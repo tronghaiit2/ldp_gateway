@@ -15,6 +15,7 @@ void main() async {
   late final AaveDebtToken debtDai;
 
   setUp(() async {
+    // need to input private key
     client = EthClient(Address.PRIVATE_KEY, Address.RPC_URL);
     poolGW = PoolGW(Address.POOL_GW, client);
     weth = IERC20(Address.WETH, client);
@@ -49,7 +50,6 @@ void main() async {
     // deposit 60 weth to aave
     await deposit("Aave", Address.WETH, BigInt.from(60));
 
-    // balance after deposit must be 40
     final wethBalanceAfterDeposit = await weth.checkBalance();
     expect(
       firstWethBalance - wethBalanceAfterDeposit,

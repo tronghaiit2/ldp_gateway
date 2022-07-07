@@ -43,4 +43,8 @@ class EthClient {
       params: params,
     );
   }
+
+  getBalance() async {
+    return client.getBalance(await credentials.extractAddress());
+  }
 }
