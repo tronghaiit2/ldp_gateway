@@ -44,7 +44,7 @@ class EthClient {
     );
   }
 
-  getBalance() async {
+  Future<EtherAmount> getBalance() async {
     return client.getBalance(await credentials.extractAddress());
   }
 }

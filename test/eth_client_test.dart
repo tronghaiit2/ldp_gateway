@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ldp_gateway/blockchain/address.dart';
-import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
 import 'package:ldp_gateway/blockchain/eth_client.dart';
+import 'package:web3dart/web3dart.dart';
 
 void main() async {
   late final EthClient client;
@@ -19,8 +19,8 @@ void main() async {
   });
 
   test("Get balance", () async {
-    final result = await IERC20(Address.WETH, client).checkBalance();
-    expect(result, equals(BigInt.from(100)));
+    final EtherAmount result = await client.getBalance();
+    print(result.getInEther);
   });
 
   test("Get chain id", () async {
