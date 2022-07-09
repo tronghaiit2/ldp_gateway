@@ -11,9 +11,11 @@ void main() async {
 
   test("Deposit", () async {
     final wethBefore = await weth.checkBalance();
+    print(wethBefore);
     // deposit 60 weth to aave
     await deposit("Aave", Address.WETH, BigInt.from(200));
     final wethAfter = await weth.checkBalance();
+    print(wethAfter);
     print("Deposit ${wethBefore - wethAfter}");
   });
 

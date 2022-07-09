@@ -4,7 +4,7 @@ class Address {
 
   static final Map<String, String> POOL = {};
 
-  static const String POOL_GW = "0x1343248cbd4e291c6979e70a138f4c774e902561";
+  static const String POOL_GW = "0x683d9cdd3239e0e01e8dc6315fa50ad92ab71d2d";
 
   static const String RPC_URL = "http://localhost:8545";
 
