@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:ldp_gateway/blockchain/address.dart';
+import 'package:ldp_gateway/blockchain/contracts/pool_gw.dart';
+import 'package:ldp_gateway/blockchain/eth_client.dart';
+import 'package:ldp_gateway/main.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ldp_gateway/route.dart';
@@ -18,6 +22,7 @@ import 'package:ldp_gateway/ui/common_widgets/NotificationDialog.dart';
 
 import 'package:ldp_gateway/provider/login/AuthProvider.dart';
 import 'package:ldp_gateway/provider/login/LoginProvider.dart';
+import 'package:web3dart/web3dart.dart';
 
 
 class LoginSection extends StatefulWidget {
@@ -86,19 +91,19 @@ class _LoginSectionState extends State<LoginSection> {
               child: Text("Đăng nhập", style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.normal, fontSize: 40, color: AppColors.main_blue))
           ),
           Container(
-            height: 300,
+            height: 100,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                account(screenWidth),
+                // account(screenWidth),
                 password(),
-                rememberMe()
+                // rememberMe()
               ],
             ),
           ),
           SafeArea(
               child: Container(
-                padding: EdgeInsets.only(top: 20, bottom: 50),
+                padding: EdgeInsets.only(top: 50, bottom: 50),
                 child: selectButton("ĐĂNG NHẬP", (){
                   if(_authProvider.isValid()) {
                     _login();
@@ -238,15 +243,41 @@ class _LoginSectionState extends State<LoginSection> {
     ]);
   }
 
-  void _login() {
+  void _login() async {
     try {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          Routes.home1, (Route<dynamic> route) => false);
+      LDPGateway.client = EthClient(_authProvider.password!, Address.RPC_URL);
+      if(LDPGateway.client == null) {
+        if(LoginSection.alertDialogCount == 0){
+          LoginSection.alertDialogCount++;
+          showWarningDialog("Private key không đúng!", context, (){
+            if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
+          });
+        }
+      } else {
+        EtherAmount etherAmount = await LDPGateway.client!.getBalance();
+        if(etherAmount.getInEther != 0) {
+          print("ok");
+          await UserPreferences().savePrivatekey(_authProvider.password!);
+          LDPGateway.poolGW = PoolGW(Address.POOL_GW, LDPGateway.client!);
+          Address.POOL["Aave"] = (await LDPGateway.poolGW.getGatewayAddress("Aave")).hex;
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              Routes.home1, (Route<dynamic> route) => false);
+        }
+        else {
+          print("none");
+          if(LoginSection.alertDialogCount == 0){
+            LoginSection.alertDialogCount++;
+            showWarningDialog("Private key không đúng!", context, (){
+              if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
+            });
+          }
+        }
+      }
     }
     on Exception catch(_){
       if(LoginSection.alertDialogCount == 0){
         LoginSection.alertDialogCount++;
-        showWarningDialog("Tên đăng nhập hoặc mật khẩu không đúng!", context, (){
+        showWarningDialog("Private key không đúng!", context, (){
           if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
         });
       }

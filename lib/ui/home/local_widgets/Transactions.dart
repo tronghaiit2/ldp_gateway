@@ -2,9 +2,14 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
+import 'package:ldp_gateway/blockchain/address.dart';
+import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart';
+import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
+import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Coin.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
-import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
+
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/ui/common_widgets/Buttons.dart';
 import 'package:ldp_gateway/ui/common_widgets/InputDecoration.dart';
@@ -14,7 +19,9 @@ import 'package:ldp_gateway/ui/new_transactions/NewTransaction.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
 import 'package:provider/provider.dart';
+import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:web3dart/src/credentials/address.dart';
 
 class Transactions extends StatefulWidget {
   const Transactions({Key? key}) : super(key: key);
@@ -25,27 +32,18 @@ class Transactions extends StatefulWidget {
 }
 
 class _TransactionsState extends State<Transactions> {
-  late Map<int, String> pools = {
-    1 : "Compound",
-    2 : "Aave",
-  };
+  bool _initialized = false;
+
   late int id_selected = 0;
   late String pool_selected = "";
 
-  late List<Coin> allCoin = [
-    Coin("Compound", "Bitcoin", "BTC", 19039.23, 0, 0, 0, "assets/images/coins/bitcoin.png"),
-    Coin("Compound", "Ethereum", "ETH", 998.02, 0, 0, 0, "assets/images/coins/ethereum.png"),
-    Coin("Compound", "BNB", "BNB", 200.23, 0, 0, 0, "assets/images/coins/bnb.png"),
-    Coin("Aave", "Bitcoin", "BTC", 19039.23, 0, 0, 0, "assets/images/coins/bitcoin.png"),
-    Coin("Aave", "Ethereum", "ETH", 998.02, 0, 0, 0, "assets/images/coins/ethereum.png"),
-    Coin("Aave", "BNB", "BNB", 200.23, 0, 0, 0, "assets/images/coins/bnb.png"),
-  ];
+  late List<Coin> allCoin = [];
 
   late List<Coin> coinList = [];
   late String _searchResult = "";
 
   late int selected_coin = 0;
-  late int _max = coinList.length;
+  late int _max;
   late CarouselController _controller = CarouselController();
 
   late int selected_transaction = -1;
@@ -53,6 +51,14 @@ class _TransactionsState extends State<Transactions> {
   @override
   void initState() {
     super.initState();
+    getData();
+    // Schedule function call after the widget is ready to display
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      _initialize();
+    });
+  }
+
+  void _initialize() async {
   }
 
   Color getColor(Set<MaterialState> states) {
@@ -67,11 +73,80 @@ class _TransactionsState extends State<Transactions> {
     return AppColors.main_blue;
   }
 
+  Future<void> listPool() async {
+
+  }
+
   Future<void> getData() async {
+    allCoin.clear();
+    int len = TextConstant.coinCodeList.length;
+    int i = 0;
+
+    // for(i = 0; i < len; i++){
+    //   String code = TextConstant.coinCodeList[i];
+    //   String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
+    //   String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+    //
+    //   IERC20 coin = IERC20(TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
+    //
+    //   EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
+    //   IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+    //
+    //   EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
+    //   AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+    //
+    //   final firstCoinBalance = await coin.checkBalance();
+    //   final firstACoinBalance = await aCoin.checkBalance();
+    //   final firstDebtBalance = await debtCoin.checkBalance();
+    //
+    //   allCoin.add(Coin("Compound", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+    // }
+
+    for(i = 0; i < len; i++){
+      String code = TextConstant.coinCodeList[i];
+      String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
+      String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+
+      IERC20 coin = IERC20(TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
+
+      EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+      IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+
+      EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+      AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+
+      final firstCoinBalance = await coin.checkBalance();
+      final firstACoinBalance = await aCoin.checkBalance();
+      final firstDebtBalance = await debtCoin.checkBalance();
+
+      allCoin.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+    }
+
+      if(i >= len) {
+        if(mounted) {
+          setState(() {
+            coinList.clear();
+            for(var coin in allCoin) {
+              if(coin.pool == pool_selected) {
+                coinList.add(coin);
+              }
+            }
+            _max = coinList.length;
+            _initialized = true;
+          });
+        }
+      }
   }
 
   @override
   Widget build(BuildContext context) {
+    // if (!_initialized) {
+    //   return const SpinKitCircle(
+    //     color: AppColors.red,
+    //     size: 50,
+    //   );
+    // }
+
     return Scaffold(
         appBar: AppBar(
           toolbarHeight: 0,
@@ -84,8 +159,15 @@ class _TransactionsState extends State<Transactions> {
               id_selected != 0 ?
               <Widget>[
                 selectCoin(),
-                searchCoin(),
-                coinCarousel(),
+                _initialized ? Column(
+                  children: [
+                    searchCoin(),
+                    coinCarousel(),
+                  ],
+                ) : SpinKitCircle(
+                  color: AppColors.red,
+                  size: 50,
+                ),
                 selectTransaction(),
                 SafeArea(
                     child: Container(
@@ -101,7 +183,7 @@ class _TransactionsState extends State<Transactions> {
                         }
                         else{
                           var transaction = Transaction("Account", pool_selected, coinList[selected_coin].name, coinList[selected_coin].code,
-                              coinList[selected_coin].rate, coinList[selected_coin].icon, TextContant.transaction_type[selected_transaction], 0, 0);
+                              coinList[selected_coin].rate, coinList[selected_coin].icon, TextConstant.transaction_type[selected_transaction], BigInt.from(0), BigInt.from(0));
                           Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -151,25 +233,33 @@ class _TransactionsState extends State<Transactions> {
               child: RefreshIndicator(
                   displacement: 0,
                   color: AppColors.red,
-                  onRefresh: getData,
+                  onRefresh: listPool,
                   child: ListView(
-                    children: pools.keys.map((int key) {
+                    children: TextConstant.pools.keys.map((int key) {
                       return RadioListTile<int>(
                           activeColor: AppColors.red,
-                          title: Text(pools[key]!, style: TextStyle(fontSize: 20)),
+                          title: Text(TextConstant.pools[key]!, style: TextStyle(fontSize: 20)),
                           value: key,
                           groupValue: id_selected,
                           onChanged: (int? value) {
-                            setState(() {
-                              id_selected = value ?? id_selected;
-                              pool_selected = pools[key]!;
-                              coinList.clear();
-                              for(var coin in allCoin) {
-                                if(coin.pool == pool_selected) {
-                                  coinList.add(coin);
+                            if(_initialized) {
+                              setState(() {
+                                selected_transaction = 0;
+                                id_selected = value ?? id_selected;
+                                pool_selected = TextConstant.pools[key]!;
+                                coinList.clear();
+                                for(var coin in allCoin) {
+                                  if(coin.pool == pool_selected) {
+                                    coinList.add(coin);
+                                  }
                                 }
-                              }
-                            });
+                                _max = coinList.length;
+                              });
+                            } else {
+                              selected_transaction = 0;
+                              id_selected = value ?? id_selected;
+                              pool_selected = TextConstant.pools[key]!;
+                            }
                           }
                       );
                     }).toList(),
@@ -227,7 +317,7 @@ class _TransactionsState extends State<Transactions> {
       onSelected: (selectedString) {
         setState(() {
           _searchResult = selectedString.toString();
-          for (int i = 0; i <= _max; i++) {
+          for (int i = 0; i < _max; i++) {
             if(coinList[i].name == _searchResult) {
               selected_coin = i;
               _controller.jumpToPage(i);
@@ -258,7 +348,8 @@ class _TransactionsState extends State<Transactions> {
   }
   Container coinCarousel(){
     return Container(
-      child: Column(children: [
+      child: Column(
+          children: [
         CarouselSlider(
           items: coinList.map((coin) => coinInformation(coin)).toList(),
           carouselController: _controller,
@@ -282,7 +373,6 @@ class _TransactionsState extends State<Transactions> {
       ]),
     );
   }
-
 
   Container coinInformation(Coin coin) {
     return Container(
@@ -331,26 +421,36 @@ class _TransactionsState extends State<Transactions> {
               shrinkWrap: true,
               crossAxisSpacing: 0,
               mainAxisSpacing: 0,
-              crossAxisCount: 2,
+              crossAxisCount: 3,
               childAspectRatio: 5,
               children: <Widget>[
-                Text('Khả dụng', textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16,
+                Text('Số dư', textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,),
                     overflow: TextOverflow.ellipsis),
-                Text('Đã dùng', textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16,
+                Text('Đã gửi', textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,),
                     overflow: TextOverflow.ellipsis),
-                Text('\$'+coin.available.toString(), textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24,
+                Text('Số nợ', textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,),
+                    overflow: TextOverflow.ellipsis),
+                Text(coin.balance.toString(), textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.red250,),
+                    overflow: TextOverflow.ellipsis),
+                Text(coin.deposit.toString(), textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.red200,),
                     overflow: TextOverflow.ellipsis),
-                Text('\$'+coin.used.toString(), textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24,
+                Text(coin.debt.toString(), textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.red150,),
                     overflow: TextOverflow.ellipsis),
@@ -382,11 +482,11 @@ class _TransactionsState extends State<Transactions> {
               childAspectRatio: 2.5,
               children: <Widget>[
                 for (var i=0; i<4; i++)
-                  selected_transaction == i ? selectedButton(TextContant.transaction_type[i],  (){
+                  selected_transaction == i ? selectedButton(TextConstant.transaction_type[i],  (){
                     setState(() {
                       selected_transaction = -1;
                     });
-                  }) : unSelectedButton(TextContant.transaction_type[i],  (){
+                  }) : unSelectedButton(TextConstant.transaction_type[i],  (){
                     setState(() {
                       selected_transaction = i;
                     });

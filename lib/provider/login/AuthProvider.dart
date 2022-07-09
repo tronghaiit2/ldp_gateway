@@ -18,18 +18,18 @@ class AuthProvider extends ChangeNotifier{
     notifyListeners();
   }
   void editPassword(String txt){
-    if(txt.length >=8 && txt.length <=100){
+    if(txt.length >=10 && txt.length <=100){
       password = txt;
       passwordError = null;
     }
     else {
       password = null;
-      passwordError = "Mật khẩu dài từ 8 đến 100 ký tự!";
+      passwordError = "Mật khẩu là private key!";
     }
     notifyListeners();
   }
   bool isValid() {
-    if (user != null && password != null) return true;
+    if (password != null) return true;
     return false;
   }
 }

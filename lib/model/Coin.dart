@@ -5,9 +5,9 @@ class Coin {
   late String name;
   late String code;
   late double rate;
-  late double total;
-  late double available;
-  late double used;
+  late BigInt balance;
+  late BigInt deposit;
+  late BigInt debt;
   late String icon;
 
   Coin(
@@ -15,9 +15,9 @@ class Coin {
       this.name,
       this.code,
       this.rate,
-      this.total,
-      this.available,
-      this.used,
+      this.balance,
+      this.deposit,
+      this.debt,
       this.icon
       );
 }

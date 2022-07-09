@@ -12,11 +12,11 @@ class History extends StatefulWidget {
 
 class _HistoryState extends State<History> {
   late List<Transaction> listTransaction = [
-    Transaction("Account", "Compound", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", "GỬI", 0, 0),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "TRẢ", 0, 0),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "RÚT", 0, 0),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "MƯỢN", 0, 0),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "TRẢ", 0, 0),
+    Transaction("Account", "Compound", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", "GỬI",  BigInt.from(0), BigInt.from(0)),
+    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
+    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "RÚT",  BigInt.from(0), BigInt.from(0)),
+    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "MƯỢN", BigInt.from(0), BigInt.from(0)),
+    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
   ];
 
   @override

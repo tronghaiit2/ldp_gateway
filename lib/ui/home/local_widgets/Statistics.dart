@@ -1,12 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart';
+import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
+import 'package:ldp_gateway/main.dart';
+import 'package:ldp_gateway/model/Coin.dart';
 import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/ui/home/local_widgets/StatisticsTab.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
+import 'package:ldp_gateway/utils/constant/TextConstant.dart';
+import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:web3dart/web3dart.dart';
 
 class Statistics extends StatefulWidget {
   const Statistics({Key? key}) : super(key: key);
@@ -16,8 +23,10 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
+  bool _initialized = false;
+
   late String address = 'address';
-  late double amount = 100000;
+  late BigInt amount;
   late String token = 'token';
 
   late Map<int, String> pools = {
@@ -25,19 +34,76 @@ class _StatisticsState extends State<Statistics> {
     2 : "Aave",
   };
 
-  late List<Statistic> compoundList = [
-    Statistic("address", "Compound", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", 0, 0, 0, 0),
-    Statistic("address", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", 0, 0, 0, 0),
-  ];
-
-  late List<Statistic> aaveList = [
-    Statistic("address", "Aave", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", 0, 0, 0, 0),
-    Statistic("address", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", 0, 0, 0, 0),
-  ];
+  late List<Coin> compoundList = [];
+  late List<Coin> aaveList = [];
 
   @override
   void initState() {
     super.initState();
+    getData();
+    getStatisticData();
+  }
+
+
+  Future<void> getData() async {
+    amount = (await LDPGateway.client!.getBalance()).getInEther;
+    token = (await UserPreferences().privatekey)!;
+    // setState(() {
+    //   _initialized = true;
+    // });
+  }
+
+  Future<void> getStatisticData() async {
+    aaveList.clear();
+    int len = TextConstant.coinCodeList.length;
+    int i = 0;
+    for(i = 0; i < len; i++){
+      String code = TextConstant.coinCodeList[i];
+      String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
+      String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+      IERC20 coin = IERC20(TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
+
+      EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+      IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+
+      EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+      AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+
+      final firstCoinBalance = await coin.checkBalance();
+      final firstACoinBalance = await aCoin.checkBalance();
+      final firstDebtBalance = await debtCoin.checkBalance();
+
+      //if(firstCoinBalance != 0 || firstACoinBalance != 0 firstDebtBalance != 0)
+      aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+    }
+
+    // for(i = 0; i < len; i++){
+    //   String code = TextConstant.coinCodeList[i];
+    //   String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
+    //   String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+    //
+    //   IERC20 coin = IERC20(TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
+    //
+    //   EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
+    //   IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+    //
+    //   EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
+    //   AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+    //
+    //   final firstCoinBalance = await coin.checkBalance();
+    //   final firstACoinBalance = await aCoin.checkBalance();
+    //   final firstDebtBalance = await debtCoin.checkBalance();
+    //
+    //   compoundList.add(Coin("Compound", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+    // }
+
+    if(i >= len) {
+      if(mounted) {
+        setState(() {
+          _initialized = true;
+        });
+      }
+    }
   }
 
   Color getColor(Set<MaterialState> states) {
@@ -54,7 +120,12 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-
+    if(!_initialized) {
+      return SpinKitCircle(
+        color: AppColors.red,
+        size: 50,
+      );
+    }
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -130,15 +201,27 @@ class _StatisticsState extends State<Statistics> {
               padding: EdgeInsets.all(10),
               child: CircleAvatar(foregroundImage: AssetImage('assets/images/home_image.jpg')),
             ),
-            Text(address, textAlign: TextAlign.left,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
-                overflow: TextOverflow.ellipsis),
-            Text('\$' + amount.toString(), textAlign: TextAlign.left,
+            // Text(address, textAlign: TextAlign.left,
+            //     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
+            //     overflow: TextOverflow.ellipsis),
+            Text(amount.toString() + ' ETH', textAlign: TextAlign.left,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.main_blue,),
                 overflow: TextOverflow.ellipsis),
-            Text(token, textAlign: TextAlign.left,
-              style: TextStyle(fontSize: 16, color: Colors.black,),
-              overflow: TextOverflow.ellipsis, maxLines: 2,),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(token.substring(0,4) + '...' + token.substring(token.length - 4,token.length), textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 16, color: Colors.black,),
+                    overflow: TextOverflow.ellipsis),
+                SizedBox(width: 5),
+                IconButton(onPressed: (){}, icon: Icon(
+                  Icons.copy_rounded,
+                  color: AppColors.checkboxBorder,
+                  size: 20,
+                ),)
+              ]
+            )
           ],
         )
     );

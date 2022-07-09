@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:ldp_gateway/blockchain/contracts/pool_gw.dart';
+import 'package:ldp_gateway/blockchain/eth_client.dart';
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/splash_screen.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
@@ -12,6 +14,10 @@ void main() {
 
 class LDPGateway extends StatelessWidget {
   const LDPGateway({Key? key}) : super(key: key);
+
+  static EthClient? client;
+  static late PoolGW poolGW;
+
   static bool isShowingToast = false;
   static bool onlyMe = false;
 

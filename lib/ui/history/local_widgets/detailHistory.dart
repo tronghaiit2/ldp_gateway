@@ -53,15 +53,15 @@ Card detailHistory(Transaction transaction){
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('\$' + transaction.amount.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.red),),
-                                Text('~' + (transaction.amount / transaction.coin_rate).toString() + ' ' + transaction.coin_code, textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),),
+                                Text(transaction.amount.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.red),),
+                                // Text('~' + (transaction.amount / transaction.coin_rate).toString() + ' ' + transaction.coin_code, textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),),
                               ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    Text('Phí: \$' + transaction.fee.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),)
+                    Text('Phí: ' + transaction.fee.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),)
                   ],
               )
             )

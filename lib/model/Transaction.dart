@@ -8,8 +8,8 @@ class Transaction {
   late double coin_rate;
   late String coin_icon;
   late String type;
-  late double amount;
-  late double fee;
+  late BigInt amount;
+  late BigInt fee;
 
   Transaction(
       this.account,

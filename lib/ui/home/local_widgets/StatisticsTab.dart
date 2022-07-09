@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
+import 'package:ldp_gateway/model/Coin.dart';
 import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
@@ -16,7 +17,7 @@ import 'package:provider/provider.dart';
 class StatisticsTab extends StatefulWidget {
   const StatisticsTab({Key? key, required this.statistic_type, required this.listStatistic}) : super(key: key);
   final int statistic_type;
-  final List<Statistic> listStatistic;
+  final List<Coin> listStatistic;
 
   @override
   State<StatisticsTab> createState() => _StatisticsTabState();
@@ -44,12 +45,6 @@ class _StatisticsTabState extends State<StatisticsTab> {
   Widget build(BuildContext context) {
     int count = 0;
     WidgetsFlutterBinding.ensureInitialized();
-    aCoinList = {
-      "Gửi" : ["1000", 'assets/images/main_icon.png', "/workdaystatistics"],
-      "Mượn" : ["1000", 'assets/images/main_icon.png',"/absentstatistics"],
-      "Trả" : ["1000",'assets/images/main_icon.png',"/arrivelatestatistics"],
-      "Rút" : ["1000",'assets/images/main_icon.png',"/leavesoonstatistics"],
-    };
 
     return  FutureBuilder(
         builder: (context, storeSnapShot) {
@@ -119,47 +114,120 @@ class _StatisticsTabState extends State<StatisticsTab> {
           Column(
             children: [
             Container(
-              width: 80,
-              padding: EdgeInsets.only(top: 10, left: 10),
-              child: Text("No. " + count.toString(), textAlign: TextAlign.left,
+              width: 70,
+              margin: EdgeInsets.only(left: 10, top: 10),
+              child: Text("No. " + (count+1).toString(), textAlign: TextAlign.left,
                 style: TextStyle(fontSize: 20, color: AppColors.blue, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis, maxLines: 2,),
             ),
             Container(
               height: 80,
-              width: 80,
-              padding: EdgeInsets.all(10),
+              width: 60,
+              padding: EdgeInsets.only(left: 10),
               alignment: Alignment.center,
-              child: Image.asset(widget.listStatistic[count].coin_icon, height: 80, width: 80, fit: BoxFit.fill),
+              child: Image.asset(widget.listStatistic[count].icon, height: 50, width: 50, fit: BoxFit.fill),
             ),
           ],),
-          Expanded(child: GridView.count(
-              padding: EdgeInsets.only(top: 10, bottom: 10),
-              scrollDirection: Axis.vertical,
-              crossAxisSpacing: 0,
-              mainAxisSpacing: 0,
-              shrinkWrap: true,
-              primary: false,
-              childAspectRatio: 3,
-              crossAxisCount: ResponsiveLayout.issmartphone(context) ? 2 : ResponsiveLayout.istablet(context) ? 4 : 5,
-              children:
-              [
-                for(int i = 0; i < 4; i++)
-                  statisticCard(TextContant.transaction_type[i], widget.listStatistic[count].deposit, () {
-                    var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].coin_name, widget.listStatistic[count].coin_code,
-                        widget.listStatistic[count].coin_rate,widget.listStatistic[count].coin_icon, TextContant.transaction_type[i], 0, 0);
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                MultiProvider(
-                                    providers: [
-                                      ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                                      ),
-                                    ], child: NewTransaction(transaction: transaction))));
-                  }),
-              ]
-          ))
+          Expanded(
+            child: Column(
+              //crossAxisAlignment:  CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                  ),
+                  child: GridView.count(
+                      padding: EdgeInsets.only(top: 15, bottom: 15),
+                      scrollDirection: Axis.vertical,
+                      crossAxisSpacing: 0,
+                      mainAxisSpacing: 0,
+                      shrinkWrap: true,
+                      primary: false,
+                      childAspectRatio: 3,
+                      crossAxisCount: 3,
+                      children:
+                      [
+                        Container(
+                          child: Text("Số dư", textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14, color: Colors.black),),
+                        ),
+                        Container(
+                          child: Text("Đã gửi", textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14, color: Colors.black),),
+                        ),
+                        Container(
+                          child: Text("Số nợ", textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14, color: Colors.black),),
+                        ),
+                      ]
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.only(left: 20, right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    border: Border(bottom: BorderSide(color: AppColors.gray,  width: 1.0, style : BorderStyle.solid)),
+                  ),
+                ),
+                GridView.count(
+                    padding: EdgeInsets.all(10),
+                    scrollDirection: Axis.vertical,
+                    crossAxisSpacing: 0,
+                    mainAxisSpacing: 0,
+                    shrinkWrap: true,
+                    primary: false,
+                    childAspectRatio: 2,
+                    crossAxisCount: 3,
+                    children:
+                    [
+                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].balance, () {
+                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
+                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[0], BigInt.from(0), BigInt.from(0));
+                          // Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //         builder: (BuildContext context) =>
+                          //             MultiProvider(
+                          //                 providers: [
+                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
+                          //                   ),
+                          //                 ], child: NewTransaction(transaction: transaction))));
+                          (){};
+                        }),
+                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].deposit, () {
+                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
+                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[1], BigInt.from(0), BigInt.from(0));
+                          // Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //         builder: (BuildContext context) =>
+                          //             MultiProvider(
+                          //                 providers: [
+                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
+                          //                   ),
+                          //                 ], child: NewTransaction(transaction: transaction))));
+                              (){};
+                        }),
+                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].debt, () {
+                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
+                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[2], BigInt.from(0), BigInt.from(0));
+                          // Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //         builder: (BuildContext context) =>
+                          //             MultiProvider(
+                          //                 providers: [
+                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
+                          //                   ),
+                          //                 ], child: NewTransaction(transaction: transaction))));
+                              (){};
+                        }),
+                    ]
+                )
+              ],
+            )
+          )
         ],)
     );
   }

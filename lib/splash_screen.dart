@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:ldp_gateway/main.dart';
 
 import 'package:ldp_gateway/route.dart';
 
@@ -61,9 +62,15 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _navigate() async {
-    //await initializeService();
-    String? token = await UserPreferences().token;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.login, (Route<dynamic> route) => false);
+    String? privatekey = await UserPreferences().privatekey;
+
+    if(LDPGateway.client == null) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          Routes.login, (Route<dynamic> route) => false);
+    }
+    else {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          Routes.home1, (Route<dynamic> route) => false);
+    }
   }
 }
