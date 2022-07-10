@@ -96,13 +96,24 @@ class _NewTransactionState extends State<NewTransaction> {
                             }
                           }
                           else {
-                            check = true;
                             await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                            check = true;
                           }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[1]){
-                          check = true;
-                          await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                          try{
+                            await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                            check = true;
+                          } on Exception catch (e) {
+                            print(e.toString());
+                            if(NewTransaction.alertDialogCount == 0){
+                              Navigator.of(context).pop();
+                              NewTransaction.alertDialogCount++;
+                              showWarningDialog("Amount is to big!", context, (){
+                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                              });
+                            }
+                          }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[2]){
                           EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
@@ -118,8 +129,8 @@ class _NewTransactionState extends State<NewTransaction> {
                             }
                           }
                           else {
-                            check = true;
                             await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                            check = true;
                           }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[3]){
@@ -136,8 +147,8 @@ class _NewTransactionState extends State<NewTransaction> {
                             }
                           }
                           else {
-                            check = true;
                             await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                            check = true;
                           }
                         }
                         else {

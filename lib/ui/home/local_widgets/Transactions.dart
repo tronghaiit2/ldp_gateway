@@ -314,6 +314,8 @@ class _TransactionsState extends State<Transactions> {
                             if(_initialized) {
                               setState(() {
                                 selected_transaction = 0;
+                                selected_coin = 0;
+                                _controller.jumpToPage(0);
                                 id_selected = value ?? id_selected;
                                 pool_selected = TextConstant.pools[key]!;
                                 coinList.clear();

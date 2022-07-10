@@ -58,6 +58,7 @@ class _HistoryState extends State<History> {
           decoration: BoxDecoration(
             color: AppColors.white,
           ),
+          width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           padding: EdgeInsets.only(left: 15, right: 15),
           child: SingleChildScrollView(
