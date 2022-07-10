@@ -119,7 +119,7 @@ class _TransactionsState extends State<Transactions> {
       final firstACoinBalance = await aCoin.checkBalance();
       final firstDebtBalance = await debtCoin.checkBalance();
 
-      allCoin.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+      allCoin.add(Coin("Aave", name, code, 0, firstCoinBalance.toInt(), firstACoinBalance.toInt(), firstDebtBalance.toInt(), icon));
     }
 
       if(i >= len) {
@@ -180,7 +180,7 @@ class _TransactionsState extends State<Transactions> {
                 SafeArea(
                     child: Container(
                       padding: EdgeInsets.only(top: 30, bottom: 40, left: 20, right: 20),
-                      child: selectButton("START TRANSACTION", (){
+                      child: selectButton("START TRANSACTION", () async {
                         if(_max == 0) {
                           if(Transactions.alertDialogCount == 0){
                             Transactions.alertDialogCount++;
@@ -200,11 +200,22 @@ class _TransactionsState extends State<Transactions> {
                             }
                           }
                           else{
-                            var transaction = Transaction("Account", pool_selected, coinList[selected_coin].name, coinList[selected_coin].code,
-                                coinList[selected_coin].rate, coinList[selected_coin].icon, TextConstant.transaction_type[selected_transaction], BigInt.from(0), BigInt.from(0));
+                            String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
+                            var transaction = aTransaction(
+                                account: address,
+                                pool: pool_selected,
+                                coin_name: coinList[selected_coin].name,
+                                coin_code: coinList[selected_coin].code,
+                                coin_rate: coinList[selected_coin].rate,
+                                coin_icon: coinList[selected_coin].icon,
+                                type: TextConstant.transaction_type[selected_transaction],
+                                amount: 0,
+                                fee: 0,
+                                time: DateTime.now().toString(),
+                            );
 
                             if(selected_transaction == 0){
-                              if(coinList[selected_coin].balance == BigInt.from(0) || coinList[selected_coin].debt != BigInt.from(0)){
+                              if(coinList[selected_coin].balance == 0 || coinList[selected_coin].debt != 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
@@ -213,7 +224,7 @@ class _TransactionsState extends State<Transactions> {
                             }
 
                             if(selected_transaction == 1){
-                              if(coinList[selected_coin].deposit != BigInt.from(0)){
+                              if(coinList[selected_coin].deposit != 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
@@ -222,7 +233,7 @@ class _TransactionsState extends State<Transactions> {
                             }
 
                             if(selected_transaction == 2){
-                              if(coinList[selected_coin].debt == BigInt.from(0)){
+                              if(coinList[selected_coin].debt == 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
@@ -231,7 +242,7 @@ class _TransactionsState extends State<Transactions> {
                             }
 
                             if(selected_transaction == 3){
-                              if(coinList[selected_coin].deposit == BigInt.from(0)){
+                              if(coinList[selected_coin].deposit == 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;

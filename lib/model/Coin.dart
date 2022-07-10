@@ -5,9 +5,9 @@ class Coin {
   late String name;
   late String code;
   late double rate;
-  late BigInt balance;
-  late BigInt deposit;
-  late BigInt debt;
+  late int balance;
+  late int deposit;
+  late int debt;
   late String icon;
 
   Coin(

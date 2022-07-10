@@ -2,7 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 
-Card detailHistory(Transaction transaction){
+String getDateTime(String time){
+  DateTime dateTime = DateTime.parse(time);
+  String datetime = '';
+  if(dateTime.day < 10) datetime += '0';
+  datetime += dateTime.day.toString();
+  datetime += '/';
+  if(dateTime.month < 3) datetime += '0';
+  datetime += dateTime.month.toString();
+  datetime += ' ';
+  if(dateTime.hour < 10) datetime += '0';
+  datetime += dateTime.hour.toString();
+  datetime += ':';
+  if(dateTime.minute < 10) datetime += '0';
+  datetime += dateTime.minute.toString();
+  return datetime;
+}
+
+Card detailHistory(aTransaction transaction){
   return Card(
     elevation: 0,
     child: InkWell(
@@ -34,34 +51,36 @@ Card detailHistory(Transaction transaction){
                     Row(
                       children: [
                         Container(
-                          height: 60,
-                          width: 100,
+                          height: 90,
+                          width: 120,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(transaction.type, textAlign: TextAlign.left, overflow: TextOverflow.clip, maxLines: 1, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.orange),),
                               Text(transaction.pool, textAlign: TextAlign.left, overflow: TextOverflow.clip, maxLines: 1, style: TextStyle(fontSize: 16),),
+                              Text(getDateTime(transaction.time), textAlign: TextAlign.left, overflow: TextOverflow.clip, maxLines: 1, style: TextStyle(fontSize: 16, color: AppColors.checkboxBorder),),
                             ],
                           ),
                         ),
                         SizedBox(width: 10),
                         Expanded(
                           child: Container(
-                            height: 60,
+                            height: 90,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(transaction.amount.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.red),),
-                                // Text('~' + (transaction.amount / transaction.coin_rate).toString() + ' ' + transaction.coin_code, textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),),
+                                Text(transaction.coin_code, textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 14),),
+                                Text('Fee: ' + transaction.fee.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),)
                               ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    Text('Phí: ' + transaction.fee.toString(), textAlign: TextAlign.left, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 16),)
+
                   ],
               )
             )

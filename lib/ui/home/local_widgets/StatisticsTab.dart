@@ -182,45 +182,12 @@ class _StatisticsTabState extends State<StatisticsTab> {
                     children:
                     [
                         statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].balance, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[0], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
                           (){};
                         }),
                         statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].deposit, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[1], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
                               (){};
                         }),
                         statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].debt, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[2], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
                               (){};
                         }),
                     ]

@@ -41,6 +41,7 @@ class _StatisticsState extends State<Statistics> {
 
 
   Future<void> getData() async {
+    address = (await LDPGateway.client!.credentials.extractAddress()).toString();
     amount = (await LDPGateway.client!.getBalance()).getInEther;
     token = (await UserPreferences().privatekey)!;
     if(mounted){
@@ -71,7 +72,7 @@ class _StatisticsState extends State<Statistics> {
       final firstDebtBalance = await debtCoin.checkBalance();
 
       if(firstCoinBalance != BigInt.from(0) || firstACoinBalance != BigInt.from(0) || firstDebtBalance != BigInt.from(0)) {
-        aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+        aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance.toInt(), firstACoinBalance.toInt(), firstDebtBalance.toInt(), icon));
       }
     }
 
@@ -118,15 +119,6 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-    if(_initialized == 0) {
-      return const Center(
-        child: SpinKitCircle(
-          color: AppColors.red,
-          size: 50,
-        ),
-      );
-    }
-
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -149,7 +141,14 @@ class _StatisticsState extends State<Statistics> {
           // give the app bar rounded corners
           iconTheme: IconThemeData(color: AppColors.white),
         ),
-        body: Column(
+        body:
+        _initialized == 0 ? const Center(
+          child: SpinKitCircle(
+            color: AppColors.red,
+            size: 50,
+          ),
+        ) :
+        Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             headerInformation(),
@@ -208,9 +207,9 @@ class _StatisticsState extends State<Statistics> {
               padding: EdgeInsets.all(10),
               child: CircleAvatar(foregroundImage: AssetImage('assets/images/home_image.jpg')),
             ),
-            // Text(address, textAlign: TextAlign.left,
-            //     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
-            //     overflow: TextOverflow.ellipsis),
+            Text(address.substring(0,5) + '...' + address.substring(address.length - 5,address.length), textAlign: TextAlign.left,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
+                overflow: TextOverflow.ellipsis),
             Text(amount.toString() + ' ETH', textAlign: TextAlign.left,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.main_blue,),
                 overflow: TextOverflow.ellipsis),

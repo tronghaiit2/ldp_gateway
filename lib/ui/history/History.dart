@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/ui/history/local_widgets/detailHistory.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
+import 'package:ldp_gateway/utils/sqflite_db/transaction_history_db.dart';
 
 class History extends StatefulWidget {
   const History({Key? key}) : super(key: key);
@@ -11,14 +14,25 @@ class History extends StatefulWidget {
 }
 
 class _HistoryState extends State<History> {
-  late List<Transaction> listTransaction = [
-    Transaction("Account", "Compound", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", "GỬI",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "RÚT",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "MƯỢN", BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
-  ];
+  late List<aTransaction> listTransaction = [];
 
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  Future<void> getData() async {
+    String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
+    listTransaction = await DBProvider.dbase.getAllTransactions(address);
+    if(mounted){
+      setState(() {
+        _initialized = true;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +47,14 @@ class _HistoryState extends State<History> {
         elevation: 1,
         automaticallyImplyLeading: false,
       ),
-      body: Container(
+      body:
+      _initialized == 0 ? const Center(
+        child: SpinKitCircle(
+          color: AppColors.red,
+          size: 50,
+        ),
+      ) :
+        Container(
           decoration: BoxDecoration(
             color: AppColors.white,
           ),

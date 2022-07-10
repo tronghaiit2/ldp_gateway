@@ -15,13 +15,14 @@ import 'package:ldp_gateway/ui/common_widgets/ResponsiveLayout.dart';
 import 'package:ldp_gateway/ui/home/local_widgets/CoinsCarousel.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
+import 'package:ldp_gateway/utils/sqflite_db/transaction_history_db.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:web3dart/credentials.dart';
 
 class NewTransaction extends StatefulWidget {
   const NewTransaction({Key? key, required this.transaction}) : super(key: key);
-  final Transaction transaction;
+  final aTransaction transaction;
 
   static int alertDialogCount = 0;
 
@@ -31,7 +32,7 @@ class NewTransaction extends StatefulWidget {
 
 class _NewTransactionState extends State<NewTransaction> {
   late NewTransactionProvider _newTransactionProvider;
-  late Transaction transaction = widget.transaction;
+  late aTransaction transaction = widget.transaction;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +78,7 @@ class _NewTransactionState extends State<NewTransaction> {
                     showLoading(context);
                     transaction.amount = _newTransactionProvider.amount;
                     transaction.fee = _newTransactionProvider.fee;
+                    transaction.time = DateTime.now().toString();
                     bool check = false;
 
                     switch(widget.transaction.pool) {
@@ -84,7 +86,7 @@ class _NewTransactionState extends State<NewTransaction> {
                         if(widget.transaction.type == TextConstant.transaction_type[0]){
                           IERC20 coin = IERC20(TextConstant.aaveTokenList[transaction.coin_code] ?? "", LDPGateway.client!);
                           final firstCoinBalance = await coin.checkBalance();
-                          if(firstCoinBalance < transaction.amount)  {
+                          if(firstCoinBalance.toInt() < transaction.amount)  {
                             if(NewTransaction.alertDialogCount == 0){
                               Navigator.of(context).pop();
                               NewTransaction.alertDialogCount++;
@@ -95,18 +97,18 @@ class _NewTransactionState extends State<NewTransaction> {
                           }
                           else {
                             check = true;
-                            await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                            await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
                           }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[1]){
                           check = true;
-                          await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[2]){
                           EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
                           AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
                           final firstCoinBalance = await debtCoin.checkBalance();
-                          if(firstCoinBalance < transaction.amount)  {
+                          if(firstCoinBalance.toInt() < transaction.amount)  {
                             if(NewTransaction.alertDialogCount == 0){
                               Navigator.of(context).pop();
                               NewTransaction.alertDialogCount++;
@@ -117,14 +119,14 @@ class _NewTransactionState extends State<NewTransaction> {
                           }
                           else {
                             check = true;
-                            await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                            await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
                           }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[3]){
                           EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
                           IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
                           final firstCoinBalance = await aCoin.checkBalance();
-                          if(firstCoinBalance < transaction.amount)  {
+                          if(firstCoinBalance.toInt() < transaction.amount)  {
                             if(NewTransaction.alertDialogCount == 0){
                               Navigator.of(context).pop();
                               NewTransaction.alertDialogCount++;
@@ -135,7 +137,7 @@ class _NewTransactionState extends State<NewTransaction> {
                           }
                           else {
                             check = true;
-                            await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                            await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
                           }
                         }
                         else {
@@ -150,9 +152,8 @@ class _NewTransactionState extends State<NewTransaction> {
                         break;
                     }
 
-                    print("Done!");
-
                     if(_newTransactionProvider.isValid() && check == true) {
+                      DBProvider.dbase.insertTransaction(transaction);
                       Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.home2, (Route<dynamic> route) => false);
                     }

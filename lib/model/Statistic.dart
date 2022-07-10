@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-
-class Statistic {
+class Statistics {
   late String account;
   late String pool;
   late String coin_name;
@@ -12,7 +10,7 @@ class Statistic {
   late double repay;
   late double withdraw;
 
-  Statistic(
+  Statistics(
       this.account,
       this.pool,
       this.coin_name,
