@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart';
+import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
 import 'package:ldp_gateway/blockchain/pool_gateway.dart';
+import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:ldp_gateway/route.dart';
@@ -14,6 +17,7 @@ import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:web3dart/credentials.dart';
 
 class NewTransaction extends StatefulWidget {
   const NewTransaction({Key? key, required this.transaction}) : super(key: key);
@@ -69,66 +73,93 @@ class _NewTransactionState extends State<NewTransaction> {
             SafeArea(
                 child: Container(
                   padding: EdgeInsets.only(top: 20, bottom: 40, left: 20, right: 20),
-                  child: selectButton("THỰC HIỆN GIAO DỊCH", () async {
+                  child: selectButton("CONFIRM TRANSACTION", () async {
+                    showLoading(context);
                     transaction.amount = _newTransactionProvider.amount;
                     transaction.fee = _newTransactionProvider.fee;
+                    bool check = false;
 
                     switch(widget.transaction.pool) {
                       case "Aave":
                         if(widget.transaction.type == TextConstant.transaction_type[0]){
-                          await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          IERC20 coin = IERC20(TextConstant.aaveTokenList[transaction.coin_code] ?? "", LDPGateway.client!);
+                          final firstCoinBalance = await coin.checkBalance();
+                          if(firstCoinBalance < transaction.amount)  {
+                            if(NewTransaction.alertDialogCount == 0){
+                              Navigator.of(context).pop();
+                              NewTransaction.alertDialogCount++;
+                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Balance!", context, (){
+                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                              });
+                            }
+                          }
+                          else {
+                            check = true;
+                            await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[1]){
+                          check = true;
                           await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[2]){
-                          await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                          AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+                          final firstCoinBalance = await debtCoin.checkBalance();
+                          if(firstCoinBalance < transaction.amount)  {
+                            if(NewTransaction.alertDialogCount == 0){
+                              Navigator.of(context).pop();
+                              NewTransaction.alertDialogCount++;
+                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Debt!", context, (){
+                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                              });
+                            }
+                          }
+                          else {
+                            check = true;
+                            await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          }
                         }
                         else if (widget.transaction.type == TextConstant.transaction_type[3]){
-                          await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                          IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+                          final firstCoinBalance = await aCoin.checkBalance();
+                          if(firstCoinBalance < transaction.amount)  {
+                            if(NewTransaction.alertDialogCount == 0){
+                              Navigator.of(context).pop();
+                              NewTransaction.alertDialogCount++;
+                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Deposit!", context, (){
+                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                              });
+                            }
+                          }
+                          else {
+                            check = true;
+                            await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
+                          }
                         }
                         else {
                           if(NewTransaction.alertDialogCount == 0){
+                            Navigator.of(context).pop();
                             NewTransaction.alertDialogCount++;
-                            showWarningDialog("Lỗi sao dịch, giao dịch lại!", context, (){
+                            showWarningDialog("Error, please try again!", context, (){
                               if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
                             });
                           }
                         }
                         break;
-
-                      // case "Compound":
-                      //   if(widget.transaction.type == TextConstant.transaction_type[0]){
-                      //     await deposit(widget.transaction.pool, TextConstant.compoundTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
-                      //   }
-                      //   else if (widget.transaction.type == TextConstant.transaction_type[1]){
-                      //     await borrow(widget.transaction.pool, TextConstant.compoundTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
-                      //   }
-                      //   else if (widget.transaction.type == TextConstant.transaction_type[2]){
-                      //     await repay(widget.transaction.pool, TextConstant.compoundTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
-                      //   }
-                      //   else if (widget.transaction.type == TextConstant.transaction_type[3]){
-                      //     await withdraw(widget.transaction.pool, TextConstant.compoundTokenList[widget.transaction.coin_code] ?? "", transaction.amount);
-                      //   }
-                      //   else {
-                      //     if(NewTransaction.alertDialogCount == 0){
-                      //       NewTransaction.alertDialogCount++;
-                      //       showWarningDialog("Lỗi sao dịch, giao dịch lại!", context, (){
-                      //         if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
-                      //       });
-                      //     }
-                      //   }
-                      //   break;
                     }
 
-                    if(_newTransactionProvider.isValid()) {
+                    print("Done!");
+
+                    if(_newTransactionProvider.isValid() && check == true) {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.home2, (Route<dynamic> route) => false);
                     }
                     else{
                       if(NewTransaction.alertDialogCount == 0){
                         NewTransaction.alertDialogCount++;
-                        showWarningDialog("Hãy nhập lượng tiền và \n giao dịch cao hơn tối thiểu!", context, (){
+                        showWarningDialog("Please fill in Amount!", context, (){
                           if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
                         });
                       }
@@ -216,7 +247,7 @@ class _NewTransactionState extends State<NewTransaction> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('SỐ LƯỢNG', textAlign: TextAlign.center,
+            Text('AMOUNT', textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, color: Colors.black,),
               overflow: TextOverflow.ellipsis, maxLines: 2,),
                 //Text('\$', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.main_blue,),),
@@ -243,45 +274,48 @@ class _NewTransactionState extends State<NewTransaction> {
             // Text((_newTransactionProvider.amount/widget.transaction.coin_rate).toString() + ' ' + widget.transaction.coin_code, textAlign: TextAlign.left,
             //   style: TextStyle(fontSize: 16, color: Colors.black,),
             //   overflow: TextOverflow.ellipsis),
+            Text(widget.transaction.coin_code, textAlign: TextAlign.left,
+              style: TextStyle(fontSize: 16, color:  AppColors.blue,),
+              overflow: TextOverflow.ellipsis),
             Text(_newTransactionProvider.amountError ?? '', textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: AppColors.main_red,),
                 overflow: TextOverflow.ellipsis),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-              Text('Phí: ', textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.blue,),
-                  overflow: TextOverflow.ellipsis),
-              Container(
-                width: 100,
-                child: TextField(
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.main_blue,),
-                  controller: null,
-                  cursorColor: AppColors.checkboxBorder,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    //isDense: true,
-                      hintText: '---',
-                      hintStyle: TextStyle(color: AppColors.checkboxBorder),
-                      contentPadding: EdgeInsets.only(left: 5, top: 15, bottom: 15, right: 5),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none
-                      )
-                  ),
-                  onChanged: (value){
-                    _newTransactionProvider.editFee(value, BigInt.from(0));
-                  },
-                ),
-              ),
-              // Text('/\$0.50', textAlign: TextAlign.left,
-              //     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.blue,),
-              //     overflow: TextOverflow.ellipsis),
-            ],),
-            Text(_newTransactionProvider.feeError ?? '', textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.main_red,),
-                overflow: TextOverflow.ellipsis),
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   children: [
+            //   Text('Fee: ', textAlign: TextAlign.left,
+            //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.blue,),
+            //       overflow: TextOverflow.ellipsis),
+            //   Container(
+            //     width: 100,
+            //     child: TextField(
+            //       textAlign: TextAlign.center,
+            //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.main_blue,),
+            //       controller: null,
+            //       cursorColor: AppColors.checkboxBorder,
+            //       keyboardType: TextInputType.number,
+            //       decoration: InputDecoration(
+            //         //isDense: true,
+            //           hintText: '---',
+            //           hintStyle: TextStyle(color: AppColors.checkboxBorder),
+            //           contentPadding: EdgeInsets.only(left: 5, top: 15, bottom: 15, right: 5),
+            //           border: OutlineInputBorder(
+            //               borderRadius: BorderRadius.circular(30),
+            //               borderSide: BorderSide.none
+            //           )
+            //       ),
+            //       onChanged: (value){
+            //         _newTransactionProvider.editFee(value, BigInt.from(0));
+            //       },
+            //     ),
+            //   ),
+            //   // Text('/\$0.50', textAlign: TextAlign.left,
+            //   //     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.blue,),
+            //   //     overflow: TextOverflow.ellipsis),
+            // ],),
+            // Text(_newTransactionProvider.feeError ?? '', textAlign: TextAlign.center,
+            //     style: TextStyle(fontSize: 12, color: AppColors.main_red,),
+            //     overflow: TextOverflow.ellipsis),
             transactionCard()
           ],
         )
@@ -305,7 +339,7 @@ class _NewTransactionState extends State<NewTransaction> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-              Text('Số lượng: ', textAlign: TextAlign.center,
+              Text('Amount: ', textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,),
                 overflow: TextOverflow.ellipsis, maxLines: 2,),
               Text(_newTransactionProvider.amount.toString(), textAlign: TextAlign.center,
@@ -315,7 +349,7 @@ class _NewTransactionState extends State<NewTransaction> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Phí giao dịch: ', textAlign: TextAlign.center,
+                Text('Fee: ', textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,),
                   overflow: TextOverflow.ellipsis, maxLines: 2,),
                 Text(_newTransactionProvider.fee.toString(), textAlign: TextAlign.center,
@@ -333,7 +367,7 @@ class _NewTransactionState extends State<NewTransaction> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Tổng cộng: ', textAlign: TextAlign.center,
+                Text('Total: ', textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,),
                   overflow: TextOverflow.ellipsis, maxLines: 2,),
                 Text(_newTransactionProvider.total().toString(), textAlign: TextAlign.center,

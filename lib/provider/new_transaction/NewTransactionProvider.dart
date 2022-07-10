@@ -10,13 +10,22 @@ class NewTransactionProvider extends ChangeNotifier{
   BigInt get fee => _fee ?? BigInt.from(0);
 
   BigInt total(){
-    if(_amount != null && _fee != null) {
-      return (_amount! + _fee!);
+    if(_amount != null) {
+      return (_amount!);
     }
     else{
       return BigInt.from(0);
     }
   }
+
+  // BigInt total(){
+  //   if(_amount != null && _fee != null) {
+  //     return (_amount! + _fee!);
+  //   }
+  //   else{
+  //     return BigInt.from(0);
+  //   }
+  // }
 
   void editAmount(String txt){
     if(BigInt.tryParse(txt) != null){
@@ -47,8 +56,13 @@ class NewTransactionProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+  // bool isValid() {
+  //   if (_amount != null && _fee != null) return true;
+  //   return false;
+  // }
+
   bool isValid() {
-    if (_amount != null && _fee != null) return true;
+    if (_amount != null) return true;
     return false;
   }
 

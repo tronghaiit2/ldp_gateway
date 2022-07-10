@@ -28,9 +28,9 @@ class _HistoryState extends State<History> {
         centerTitle: true,
         backgroundColor: AppColors.white,
         toolbarHeight: 50,
-        title: Text("Lịch sử", style: TextStyle(
+        title: Text("Transaction History", style: TextStyle(
             fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.main_blue)),
-        elevation: 0,
+        elevation: 1,
         automaticallyImplyLeading: false,
       ),
       body: Container(

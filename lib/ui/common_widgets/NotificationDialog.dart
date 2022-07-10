@@ -3,6 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/ui/common_widgets/Buttons.dart';
 
+showLoading(BuildContext context){
+  return showDialog(
+    // The user CANNOT close this dialog  by pressing outsite it
+      barrierDismissible: false,
+      context: context,
+      builder: (_) {
+        return Dialog(
+          // The background color
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                // The loading indicator
+                CircularProgressIndicator(
+                  color: AppColors.red,
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                // Some text
+                Text('Loading...')
+              ],
+            ),
+          ),
+        );
+      });
+}
+
 showWarningDialog(String message, BuildContext context,
     [Function? onConfirm, String textConfirm = "OK"]) {
     return showCupertinoDialog(

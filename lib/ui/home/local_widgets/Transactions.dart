@@ -34,7 +34,7 @@ class Transactions extends StatefulWidget {
 class _TransactionsState extends State<Transactions> {
   bool _initialized = false;
 
-  late int id_selected = 0;
+  late int id_selected = 1 ;
   late String pool_selected = "";
 
   late List<Coin> allCoin = [];
@@ -43,7 +43,7 @@ class _TransactionsState extends State<Transactions> {
   late String _searchResult = "";
 
   late int selected_coin = 0;
-  late int _max;
+  late int _max = 0;
   late CarouselController _controller = CarouselController();
 
   late int selected_transaction = -1;
@@ -125,6 +125,9 @@ class _TransactionsState extends State<Transactions> {
       if(i >= len) {
         if(mounted) {
           setState(() {
+            selected_transaction = 0;
+            id_selected = 1;
+            pool_selected = TextConstant.pools[1]!;
             coinList.clear();
             for(var coin in allCoin) {
               if(coin.pool == pool_selected) {
@@ -164,35 +167,90 @@ class _TransactionsState extends State<Transactions> {
                     searchCoin(),
                     coinCarousel(),
                   ],
-                ) : SpinKitCircle(
-                  color: AppColors.red,
-                  size: 50,
+                ) : Container(
+                  height: 300,
+                  width: 200,
+                  alignment: Alignment.center,
+                  child: const SpinKitCircle(
+                    color: AppColors.red,
+                    size: 50,
+                  ),
                 ),
                 selectTransaction(),
                 SafeArea(
                     child: Container(
-                      padding: EdgeInsets.only(top: 20, bottom: 40, left: 20, right: 20),
-                      child: selectButton("BẮT ĐẦU GIAO DỊCH", (){
-                        if(selected_transaction == -1) {
+                      padding: EdgeInsets.only(top: 30, bottom: 40, left: 20, right: 20),
+                      child: selectButton("START TRANSACTION", (){
+                        if(_max == 0) {
                           if(Transactions.alertDialogCount == 0){
                             Transactions.alertDialogCount++;
-                            showWarningDialog("Hãy lựa chọn giao dịch!", context, (){
+                            showWarningDialog("Please, waiting for loading Tokens!", context, (){
                               if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
                             });
                           }
                         }
-                        else{
-                          var transaction = Transaction("Account", pool_selected, coinList[selected_coin].name, coinList[selected_coin].code,
-                              coinList[selected_coin].rate, coinList[selected_coin].icon, TextConstant.transaction_type[selected_transaction], BigInt.from(0), BigInt.from(0));
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) =>
-                                      MultiProvider(
-                                          providers: [
-                                            ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                                            ),
-                                          ], child: NewTransaction(transaction: transaction))));
+                        else {
+                          bool check = true;
+                          if(selected_transaction == -1) {
+                            if(Transactions.alertDialogCount == 0){
+                              Transactions.alertDialogCount++;
+                              showWarningDialog("Please, select transaction type!", context, (){
+                                if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
+                              });
+                            }
+                          }
+                          else{
+                            var transaction = Transaction("Account", pool_selected, coinList[selected_coin].name, coinList[selected_coin].code,
+                                coinList[selected_coin].rate, coinList[selected_coin].icon, TextConstant.transaction_type[selected_transaction], BigInt.from(0), BigInt.from(0));
+
+                            if(selected_transaction == 0){
+                              if(coinList[selected_coin].balance == BigInt.from(0) || coinList[selected_coin].debt != BigInt.from(0)){
+                                check = false;
+                                showWarningDialog("Please, cannot start transaction!", context, (){
+                                  if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
+                                });
+                              }
+                            }
+
+                            if(selected_transaction == 1){
+                              if(coinList[selected_coin].deposit != BigInt.from(0)){
+                                check = false;
+                                showWarningDialog("Please, cannot start transaction!", context, (){
+                                  if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
+                                });
+                              }
+                            }
+
+                            if(selected_transaction == 2){
+                              if(coinList[selected_coin].debt == BigInt.from(0)){
+                                check = false;
+                                showWarningDialog("Please, cannot start transaction!", context, (){
+                                  if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
+                                });
+                              }
+                            }
+
+                            if(selected_transaction == 3){
+                              if(coinList[selected_coin].deposit == BigInt.from(0)){
+                                check = false;
+                                showWarningDialog("Please, cannot start transaction!", context, (){
+                                  if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
+                                });
+                              }
+                            }
+
+                            if(check){
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          MultiProvider(
+                                              providers: [
+                                                ChangeNotifierProvider(create: (_) => NewTransactionProvider()
+                                                ),
+                                              ], child: NewTransaction(transaction: transaction))));
+                            }
+                          }
                         }
                       }),
                     )
@@ -255,10 +313,6 @@ class _TransactionsState extends State<Transactions> {
                                 }
                                 _max = coinList.length;
                               });
-                            } else {
-                              selected_transaction = 0;
-                              id_selected = value ?? id_selected;
-                              pool_selected = TextConstant.pools[key]!;
                             }
                           }
                       );
@@ -333,7 +387,7 @@ class _TransactionsState extends State<Transactions> {
           style: TextStyle(fontSize: 20, color: Colors.black),
           cursorColor: AppColors.checkboxBorder,
           keyboardType: TextInputType.text,
-          decoration: textFieldSearchDecoration("Tìm kiếm coin", (){
+          decoration: textFieldSearchDecoration("Search token", (){
             setState(() {
               controller.clear();
               _searchResult = "";
@@ -411,7 +465,7 @@ class _TransactionsState extends State<Transactions> {
                   ],
                   borderRadius: BorderRadius.all(Radius.circular(50))
               ),
-              padding: EdgeInsets.all(5),
+              margin: EdgeInsets.all(5),
               child: CircleAvatar(
                   foregroundImage: AssetImage(coin.icon)),
             ),
@@ -422,19 +476,19 @@ class _TransactionsState extends State<Transactions> {
               crossAxisSpacing: 0,
               mainAxisSpacing: 0,
               crossAxisCount: 3,
-              childAspectRatio: 5,
+              childAspectRatio: 4,
               children: <Widget>[
-                Text('Số dư', textAlign: TextAlign.center,
+                Text('Balace', textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,),
                     overflow: TextOverflow.ellipsis),
-                Text('Đã gửi', textAlign: TextAlign.center,
+                Text('Deposit', textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,),
                     overflow: TextOverflow.ellipsis),
-                Text('Số nợ', textAlign: TextAlign.center,
+                Text('Debt', textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,),
@@ -469,7 +523,7 @@ class _TransactionsState extends State<Transactions> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Chọn giao dịch', textAlign: TextAlign.left,
+            Text('Select transaction type', textAlign: TextAlign.left,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.blue,),
                 overflow: TextOverflow.ellipsis),
             GridView.count(

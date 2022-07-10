@@ -149,15 +149,15 @@ class _StatisticsTabState extends State<StatisticsTab> {
                       children:
                       [
                         Container(
-                          child: Text("Số dư", textAlign: TextAlign.center,
+                          child: Text("Balance", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                         Container(
-                          child: Text("Đã gửi", textAlign: TextAlign.center,
+                          child: Text("Deposit", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                         Container(
-                          child: Text("Số nợ", textAlign: TextAlign.center,
+                          child: Text("Debt", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                       ]

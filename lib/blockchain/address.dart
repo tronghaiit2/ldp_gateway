@@ -6,7 +6,7 @@ class Address {
 
   static const String POOL_GW = "0x683d9cdd3239e0e01e8dc6315fa50ad92ab71d2d";
 
-  static const String RPC_URL = "http://localhost:8545";
+  static const String RPC_URL = "https://30f7-171-241-48-79.ap.ngrok.io";
 
   static const String WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 

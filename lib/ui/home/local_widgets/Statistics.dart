@@ -23,16 +23,11 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
-  bool _initialized = false;
+  int _initialized = 0;
 
   late String address = 'address';
   late BigInt amount;
   late String token = 'token';
-
-  late Map<int, String> pools = {
-    1 : "Compound",
-    2 : "Aave",
-  };
 
   late List<Coin> compoundList = [];
   late List<Coin> aaveList = [];
@@ -48,9 +43,11 @@ class _StatisticsState extends State<Statistics> {
   Future<void> getData() async {
     amount = (await LDPGateway.client!.getBalance()).getInEther;
     token = (await UserPreferences().privatekey)!;
-    // setState(() {
-    //   _initialized = true;
-    // });
+    if(mounted){
+      setState(() {
+        _initialized = 1;
+      });
+    }
   }
 
   Future<void> getStatisticData() async {
@@ -73,8 +70,9 @@ class _StatisticsState extends State<Statistics> {
       final firstACoinBalance = await aCoin.checkBalance();
       final firstDebtBalance = await debtCoin.checkBalance();
 
-      //if(firstCoinBalance != 0 || firstACoinBalance != 0 firstDebtBalance != 0)
-      aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+      if(firstCoinBalance != BigInt.from(0) || firstACoinBalance != BigInt.from(0) || firstDebtBalance != BigInt.from(0)) {
+        aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+      }
     }
 
     // for(i = 0; i < len; i++){
@@ -100,7 +98,7 @@ class _StatisticsState extends State<Statistics> {
     if(i >= len) {
       if(mounted) {
         setState(() {
-          _initialized = true;
+          _initialized = 2;
         });
       }
     }
@@ -120,12 +118,15 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-    if(!_initialized) {
-      return SpinKitCircle(
-        color: AppColors.red,
-        size: 50,
+    if(_initialized == 0) {
+      return const Center(
+        child: SpinKitCircle(
+          color: AppColors.red,
+          size: 50,
+        ),
       );
     }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -154,13 +155,19 @@ class _StatisticsState extends State<Statistics> {
             headerInformation(),
             tabBarLabel(),
             Expanded(
-              child: TabBarView(
-                children: [
-                  StatisticsTab(statistic_type: 0, listStatistic: compoundList),
-                  StatisticsTab(statistic_type: 1, listStatistic: aaveList),
-                ],
-              ),
-            )
+                child:
+                _initialized  == 2 ?TabBarView(
+                  children: [
+                    StatisticsTab(statistic_type: 1, listStatistic: aaveList),
+                    StatisticsTab(statistic_type: 2, listStatistic: compoundList),
+                  ],
+                ) : const Center(
+                  child: SpinKitCircle(
+                    color: AppColors.red,
+                    size: 50,
+                  ),
+                )
+              )
           ],
         ),
       ),
@@ -254,10 +261,10 @@ class _StatisticsState extends State<Statistics> {
         unselectedLabelColor: AppColors.checkboxBorder,
         tabs: [
           Tab(
-            text: pools[1]!,
+            text: TextConstant.pools[1]!,
           ),
           Tab(
-            text: pools[2]!,
+            text: TextConstant.pools[2]!,
           ),
         ],
       ),
