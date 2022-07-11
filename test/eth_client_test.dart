@@ -1,26 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ldp_gateway/blockchain/address.dart';
+import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
+import 'package:ldp_gateway/blockchain/contracts/pool_gw.dart';
 import 'package:ldp_gateway/blockchain/eth_client.dart';
-import 'package:web3dart/web3dart.dart';
 
 void main() async {
-  late final EthClient client;
-
-  setUp(() {
-    client = EthClient(Address.PRIVATE_KEY, Address.RPC_URL);
-  });
-
-  test("Create singleton instance of eth client", () async {
-    final address = await client.credentials.extractAddress();
-    expect(
-      address.hex,
-      equalsIgnoringCase("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
-    );
-  });
+  final EthClient client = EthClient(Address.PRIVATE_KEY, Address.RPC_URL);
+  final address = (await client.credentials.extractAddress()).hex;
+  final poolGW = PoolGW(Address.POOL_GW, client);
 
   test("Get balance", () async {
-    final EtherAmount result = await client.getBalance();
-    print(result.getInEther);
+    final result = await IERC20(Address.BAT, client).getBalance(address);
+    print(result);
   });
 
   test("Get chain id", () async {

@@ -26,13 +26,17 @@ class CompoundDebtToken {
     );
   }
 
-  Future<BigInt> checkBalance() async {
+  Future<BigInt> getBalance(String address) async {
     return (await client.call(
       token,
       token.function("borrowBalanceCurrent"),
-      [await client.credentials.extractAddress()],
+      [EthereumAddress.fromHex(address)],
     ))
         .first as BigInt;
+  }
+
+  Future<BigInt> checkBalance() async {
+    return getBalance((await client.credentials.extractAddress()).hex);
   }
 }
 
