@@ -233,7 +233,7 @@ class _TransactionsState extends State<Transactions> {
                             }
 
                             if(selected_transaction == 1){
-                              if(coinList[selected_coin].balance != 0){
+                              if(coinList[selected_coin].deposit != 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
