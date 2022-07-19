@@ -260,6 +260,8 @@ class _LoginSectionState extends State<LoginSection> {
         if(etherAmount.getInEther != 0) {
           print("ok");
           await UserPreferences().savePrivatekey(_authProvider.password!);
+          String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
+          await UserPreferences().saveAddress(address);
           LDPGateway.poolGW = PoolGW(Address.POOL_GW, LDPGateway.client!);
           Address.POOL["Aave"] = (await LDPGateway.poolGW.getGatewayAddress("Aave")).hex;
           Navigator.of(context).pop();

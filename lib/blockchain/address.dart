@@ -1,12 +1,13 @@
 class Address {
   static String PRIVATE_KEY =
       "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
-
   static final Map<String, String> POOL = {};
 
-  static const String POOL_GW = "0x683d9cdd3239e0e01e8dc6315fa50ad92ab71d2d";
+  static const String POOL_GW =
+      "0xae120f0df055428e45b264e7794a18c54a2a3faf";
+      //"0x1c9fd50df7a4f066884b58a05d91e4b55005876a";
 
-  static const String RPC_URL = "https://30f7-171-241-48-79.ap.ngrok.io";
+  static const String RPC_URL = "https://4345-171-241-48-79.ap.ngrok.io";
 
   static const String WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 

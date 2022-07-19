@@ -6,8 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 
-class DBProvider {
-  static final DBProvider dbase = DBProvider();
+class HistoryDBProvider {
+  static final HistoryDBProvider dbase = HistoryDBProvider();
 
   Database? _database;
 
@@ -33,6 +33,7 @@ class DBProvider {
                   'coin_code TEXT not null,'
                   'coin_rate REAL not null,'
                   'coin_icon TEXT not null,'
+                  'coin_id INTEGER not null,'
                   'type TEXT not null,'
                   'amount INTEGER not null,'
                   'fee INTEGER not null,'
@@ -84,13 +85,14 @@ class DBProvider {
     final db = await database;
     print("add db");
     var raw = await db.rawInsert(
-        "INSERT into aTransaction (account, pool, coin_name, coin_code, coin_rate, coin_icon, type, amount, fee, time)"
+        "INSERT into aTransaction (account, pool, coin_name, coin_code, coin_rate, coin_icon, coin_id, type, amount, fee, time)"
             ' VALUES (${newTransaction.account},'
             '${newTransaction.pool}'
             '${newTransaction.coin_name}'
             '${newTransaction.coin_code}'
             '${newTransaction.coin_rate}'
             '${newTransaction.coin_icon}'
+            '${newTransaction.coin_id}'
             '${newTransaction.type}'
             '${newTransaction.amount}'
             '${newTransaction.fee}'

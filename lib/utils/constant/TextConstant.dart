@@ -10,8 +10,9 @@ class TextConstant {
 
   static const List<String> transaction_type = ["Deposit","Borrow","Repay","Withdraw"];
 
-  static const List<String> coinCodeList = ["WETH","AAVE","BAT","DAI","FEI",
-                                            "TUSD","UNI","USDP","YFI","ZRX"];
+  // static const List<String> coinCodeList = ["WETH","AAVE","BAT","DAI","FEI",
+  //                                           "TUSD","UNI","USDP","YFI","ZRX"];
+  static const List<String> coinCodeList = ["WETH","BAT","DAI", "TUSD","ZRX"];
 
   // Error at MKR
   static const Map<String, String> aaveTokenList = {

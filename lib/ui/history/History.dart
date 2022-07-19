@@ -4,6 +4,7 @@ import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/ui/history/local_widgets/detailHistory.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
+import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
 import 'package:ldp_gateway/utils/sqflite_db/transaction_history_db.dart';
 
 class History extends StatefulWidget {
@@ -25,8 +26,8 @@ class _HistoryState extends State<History> {
   }
 
   Future<void> getData() async {
-    String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
-    listTransaction = await DBProvider.dbase.getAllTransactions(address);
+    String address = (await UserPreferences().address) ?? "";
+    listTransaction = await HistoryDBProvider.dbase.getAllTransactions(address);
     if(mounted){
       setState(() {
         _initialized = true;

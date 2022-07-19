@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:ldp_gateway/model/Coin.dart';
-import 'package:ldp_gateway/model/Statistic.dart';
+//import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:ldp_gateway/ui/common_widgets/ResponsiveLayout.dart';
@@ -125,7 +125,7 @@ class _StatisticsTabState extends State<StatisticsTab> {
               width: 60,
               padding: EdgeInsets.only(left: 10),
               alignment: Alignment.center,
-              child: Image.asset(widget.listStatistic[count].icon, height: 50, width: 50, fit: BoxFit.fill),
+              child: Image.asset(widget.listStatistic[count].coin_icon, height: 50, width: 50, fit: BoxFit.fill),
             ),
           ],),
           Expanded(
@@ -181,13 +181,13 @@ class _StatisticsTabState extends State<StatisticsTab> {
                     crossAxisCount: 3,
                     children:
                     [
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].balance, () {
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].balance, () {
                           (){};
                         }),
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].deposit, () {
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].deposit, () {
                               (){};
                         }),
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].debt, () {
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].debt, () {
                               (){};
                         }),
                     ]

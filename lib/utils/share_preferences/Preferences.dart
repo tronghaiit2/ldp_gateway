@@ -9,5 +9,5 @@ class Preferences {
 
   static const String account = "account";
 
-  static const String user = "user";
+  static const String address = "address";
 }

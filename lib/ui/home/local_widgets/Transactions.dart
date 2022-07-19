@@ -18,6 +18,8 @@ import 'package:ldp_gateway/ui/common_widgets/ResponsiveLayout.dart';
 import 'package:ldp_gateway/ui/new_transactions/NewTransaction.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
+import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
+import 'package:ldp_gateway/utils/sqflite_db/coin_db.dart';
 import 'package:provider/provider.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -52,13 +54,6 @@ class _TransactionsState extends State<Transactions> {
   void initState() {
     super.initState();
     getData();
-    // Schedule function call after the widget is ready to display
-    WidgetsBinding.instance?.addPostFrameCallback((_) {
-      _initialize();
-    });
-  }
-
-  void _initialize() async {
   }
 
   Color getColor(Set<MaterialState> states) {
@@ -78,51 +73,46 @@ class _TransactionsState extends State<Transactions> {
   }
 
   Future<void> getData() async {
-    allCoin.clear();
-    int len = TextConstant.coinCodeList.length;
-    int i = 0;
+    String address = (await UserPreferences().privatekey) ?? "";
+    allCoin = await CoinDBProvider.dbase.getAllCoins(address);
 
-    // for(i = 0; i < len; i++){
-    //   String code = TextConstant.coinCodeList[i];
-    //   String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
-    //   String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
-    //
-    //   IERC20 coin = IERC20(TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
-    //
-    //   EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
-    //
-    //   EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
-    //
-    //   final firstCoinBalance = await coin.checkBalance();
-    //   final firstACoinBalance = await aCoin.checkBalance();
-    //   final firstDebtBalance = await debtCoin.checkBalance();
-    //
-    //   allCoin.add(Coin("Compound", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
-    // }
+    if(allCoin.isEmpty) {
+      int len = TextConstant.coinCodeList.length;
+      int i = 0;
+      for(i = 0; i < len; i++){
+        String code = TextConstant.coinCodeList[i];
+        String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
+        String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+        IERC20 coin = IERC20(TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
 
-    for(i = 0; i < len; i++){
-      String code = TextConstant.coinCodeList[i];
-      String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
-      String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
+        EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+        IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
 
-      IERC20 coin = IERC20(TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
+        EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
+        AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
 
-      EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
-      IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+        final coinBalance = await coin.checkBalance();
+        final aCoinBalance = await aCoin.checkBalance();
+        final debtBalance = await debtCoin.checkBalance();
 
-      EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
-      AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
-
-      final firstCoinBalance = await coin.checkBalance();
-      final firstACoinBalance = await aCoin.checkBalance();
-      final firstDebtBalance = await debtCoin.checkBalance();
-
-      allCoin.add(Coin("Aave", name, code, 0, firstCoinBalance.toInt(), firstACoinBalance.toInt(), firstDebtBalance.toInt(), icon));
-    }
+        Coin newCoin = Coin(
+            account: address,
+            pool: "Aave",
+            coin_name: name,
+            coin_code: code,
+            coin_rate: 0,
+            coin_icon: icon,
+            balance: coinBalance.toInt(),
+            deposit: aCoinBalance.toInt(),
+            debt: debtBalance.toInt()
+        );
+        await CoinDBProvider.dbase.insertCoin(newCoin);
+      }
 
       if(i >= len) {
+        if(allCoin.isEmpty) {
+          allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+        }
         if(mounted) {
           setState(() {
             selected_transaction = 0;
@@ -139,6 +129,24 @@ class _TransactionsState extends State<Transactions> {
           });
         }
       }
+    }
+
+    allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+    if(mounted) {
+      setState(() {
+        selected_transaction = 0;
+        id_selected = 1;
+        pool_selected = TextConstant.pools[1]!;
+        coinList.clear();
+        for(var coin in allCoin) {
+          if(coin.pool == pool_selected) {
+            coinList.add(coin);
+          }
+        }
+        _max = coinList.length;
+        _initialized = true;
+      });
+    }
   }
 
   @override
@@ -201,13 +209,14 @@ class _TransactionsState extends State<Transactions> {
                           }
                           else{
                             String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
-                            var transaction = aTransaction(
+                            aTransaction transaction = aTransaction(
                                 account: address,
                                 pool: pool_selected,
-                                coin_name: coinList[selected_coin].name,
-                                coin_code: coinList[selected_coin].code,
-                                coin_rate: coinList[selected_coin].rate,
-                                coin_icon: coinList[selected_coin].icon,
+                                coin_name: coinList[selected_coin].coin_name,
+                                coin_code: coinList[selected_coin].coin_code,
+                                coin_rate: coinList[selected_coin].coin_rate,
+                                coin_icon: coinList[selected_coin].coin_icon,
+                                coin_id: coinList[selected_coin].id ?? 0,
                                 type: TextConstant.transaction_type[selected_transaction],
                                 amount: 0,
                                 fee: 0,
@@ -224,7 +233,7 @@ class _TransactionsState extends State<Transactions> {
                             }
 
                             if(selected_transaction == 1){
-                              if(coinList[selected_coin].deposit != 0){
+                              if(coinList[selected_coin].balance != 0){
                                 check = false;
                                 showWarningDialog("Please, cannot start transaction!", context, (){
                                   if(Transactions.alertDialogCount > 0) Transactions.alertDialogCount = 0;
@@ -342,10 +351,10 @@ class _TransactionsState extends State<Transactions> {
     return Autocomplete(
       optionsBuilder: (TextEditingValue textEditingValue){
         if(textEditingValue.text.isEmpty){
-          return coinList.map((coin) => coin.name);
+          return coinList.map((coin) => coin.coin_name);
         }
         else{
-          return coinList.map((coin) => coin.name).where((name) =>
+          return coinList.map((coin) => coin.coin_name).where((name) =>
               name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
         }
       },
@@ -385,7 +394,7 @@ class _TransactionsState extends State<Transactions> {
         setState(() {
           _searchResult = selectedString.toString();
           for (int i = 0; i < _max; i++) {
-            if(coinList[i].name == _searchResult) {
+            if(coinList[i].coin_name == _searchResult) {
               selected_coin = i;
               _controller.jumpToPage(i);
             }
@@ -460,7 +469,7 @@ class _TransactionsState extends State<Transactions> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(coin.name, textAlign: TextAlign.center,
+            Text(coin.coin_name, textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.main_blue,),
@@ -480,7 +489,7 @@ class _TransactionsState extends State<Transactions> {
               ),
               margin: EdgeInsets.all(5),
               child: CircleAvatar(
-                  foregroundImage: AssetImage(coin.icon)),
+                  foregroundImage: AssetImage(coin.coin_icon)),
             ),
             GridView.count(
               primary: false,

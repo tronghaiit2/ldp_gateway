@@ -5,6 +5,7 @@ import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart
 import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
 import 'package:ldp_gateway/blockchain/pool_gateway.dart';
 import 'package:ldp_gateway/main.dart';
+import 'package:ldp_gateway/model/Coin.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:ldp_gateway/route.dart';
@@ -15,6 +16,7 @@ import 'package:ldp_gateway/ui/common_widgets/ResponsiveLayout.dart';
 import 'package:ldp_gateway/ui/home/local_widgets/CoinsCarousel.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
+import 'package:ldp_gateway/utils/sqflite_db/coin_db.dart';
 import 'package:ldp_gateway/utils/sqflite_db/transaction_history_db.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -75,103 +77,122 @@ class _NewTransactionState extends State<NewTransaction> {
                 child: Container(
                   padding: EdgeInsets.only(top: 20, bottom: 40, left: 20, right: 20),
                   child: selectButton("CONFIRM TRANSACTION", () async {
-                    showLoading(context);
                     transaction.amount = _newTransactionProvider.amount;
                     transaction.fee = _newTransactionProvider.fee;
                     transaction.time = DateTime.now().toString();
                     bool check = false;
 
-                    switch(widget.transaction.pool) {
-                      case "Aave":
-                        if(widget.transaction.type == TextConstant.transaction_type[0]){
-                          IERC20 coin = IERC20(TextConstant.aaveTokenList[transaction.coin_code] ?? "", LDPGateway.client!);
-                          final firstCoinBalance = await coin.checkBalance();
-                          if(firstCoinBalance.toInt() < transaction.amount)  {
-                            if(NewTransaction.alertDialogCount == 0){
-                              Navigator.of(context).pop();
-                              NewTransaction.alertDialogCount++;
-                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Balance!", context, (){
-                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
-                              });
+                      if(_newTransactionProvider.amountError == null) {
+                      showLoading(context);
+                      switch(widget.transaction.pool) {
+                        case "Aave":
+                          if(widget.transaction.type == TextConstant.transaction_type[0]){
+                            IERC20 coin = IERC20(TextConstant.aaveTokenList[transaction.coin_code] ?? "", LDPGateway.client!);
+                            final firstCoinBalance = await coin.checkBalance();
+                            if(firstCoinBalance.toInt() < transaction.amount)  {
+                              if(NewTransaction.alertDialogCount == 0){
+                                Navigator.of(context).pop();
+                                NewTransaction.alertDialogCount++;
+                                showWarningDialog("Cannot make this transaction\nAmount is bigger than Balance!", context, (){
+                                  if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                                });
+                              }
+                            }
+                            else {
+                              await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                              check = true;
+                            }
+                          }
+                          else if (widget.transaction.type == TextConstant.transaction_type[1]){
+                            try{
+                              await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                              check = true;
+                            } on Exception catch (e) {
+                              print(e.toString());
+                              if(NewTransaction.alertDialogCount == 0){
+                                Navigator.of(context).pop();
+                                NewTransaction.alertDialogCount++;
+                                showWarningDialog("Amount is to big!", context, (){
+                                  if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                                });
+                              }
+                            }
+                          }
+                          else if (widget.transaction.type == TextConstant.transaction_type[2]){
+                            EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                            AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+                            final firstCoinBalance = await debtCoin.checkBalance();
+                            if(firstCoinBalance.toInt() < transaction.amount)  {
+                              if(NewTransaction.alertDialogCount == 0){
+                                Navigator.of(context).pop();
+                                NewTransaction.alertDialogCount++;
+                                showWarningDialog("Cannot make this transaction\nAmount is bigger than Debt!", context, (){
+                                  if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                                });
+                              }
+                            }
+                            else {
+                              await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                              check = true;
+                            }
+                          }
+                          else if (widget.transaction.type == TextConstant.transaction_type[3]){
+                            EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                            IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+                            final firstCoinBalance = await aCoin.checkBalance();
+                            if(firstCoinBalance.toInt() < transaction.amount)  {
+                              if(NewTransaction.alertDialogCount == 0){
+                                Navigator.of(context).pop();
+                                NewTransaction.alertDialogCount++;
+                                showWarningDialog("Cannot make this transaction\nAmount is bigger than Deposit!", context, (){
+                                  if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
+                                });
+                              }
+                            }
+                            else {
+                              await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
+                              check = true;
                             }
                           }
                           else {
-                            await deposit(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
-                            check = true;
-                          }
-                        }
-                        else if (widget.transaction.type == TextConstant.transaction_type[1]){
-                          try{
-                            await borrow(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
-                            check = true;
-                          } on Exception catch (e) {
-                            print(e.toString());
                             if(NewTransaction.alertDialogCount == 0){
                               Navigator.of(context).pop();
                               NewTransaction.alertDialogCount++;
-                              showWarningDialog("Amount is to big!", context, (){
+                              showWarningDialog("Error, please try again!", context, (){
                                 if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
                               });
                             }
                           }
-                        }
-                        else if (widget.transaction.type == TextConstant.transaction_type[2]){
-                          EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
-                          AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
-                          final firstCoinBalance = await debtCoin.checkBalance();
-                          if(firstCoinBalance.toInt() < transaction.amount)  {
-                            if(NewTransaction.alertDialogCount == 0){
-                              Navigator.of(context).pop();
-                              NewTransaction.alertDialogCount++;
-                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Debt!", context, (){
-                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
-                              });
-                            }
-                          }
-                          else {
-                            await repay(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
-                            check = true;
-                          }
-                        }
-                        else if (widget.transaction.type == TextConstant.transaction_type[3]){
-                          EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Aave", TextConstant.aaveTokenList[transaction.coin_code] ?? "");
-                          IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
-                          final firstCoinBalance = await aCoin.checkBalance();
-                          if(firstCoinBalance.toInt() < transaction.amount)  {
-                            if(NewTransaction.alertDialogCount == 0){
-                              Navigator.of(context).pop();
-                              NewTransaction.alertDialogCount++;
-                              showWarningDialog("Cannot make this transaction\nAmount is bigger than Deposit!", context, (){
-                                if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
-                              });
-                            }
-                          }
-                          else {
-                            await withdraw(widget.transaction.pool, TextConstant.aaveTokenList[widget.transaction.coin_code] ?? "", BigInt.from(transaction.amount));
-                            check = true;
-                          }
-                        }
-                        else {
-                          if(NewTransaction.alertDialogCount == 0){
-                            Navigator.of(context).pop();
-                            NewTransaction.alertDialogCount++;
-                            showWarningDialog("Error, please try again!", context, (){
-                              if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
-                            });
-                          }
-                        }
-                        break;
+                          break;
+                      }
                     }
 
                     if(_newTransactionProvider.isValid() && check == true) {
-                      DBProvider.dbase.insertTransaction(transaction);
+                      Coin newCoin =  (await CoinDBProvider.dbase.getInfoCoin(transaction.coin_id))!;
+                      IERC20 coin = IERC20(TextConstant.aaveTokenList[transaction.coin_code] ?? "", LDPGateway.client!);
+
+                      EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse(transaction.pool, TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                      IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
+
+                      EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt(transaction.pool, TextConstant.aaveTokenList[transaction.coin_code] ?? "");
+                      AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
+
+                      final coinBalance = await coin.checkBalance();
+                      final aCoinBalance = await aCoin.checkBalance();
+                      final debtBalance = await debtCoin.checkBalance();
+                      newCoin.balance = coinBalance.toInt();
+                      newCoin.deposit = aCoinBalance.toInt();
+                      newCoin.debt = debtBalance.toInt();
+
+                      await CoinDBProvider.dbase.updateCoin(newCoin);
+                      await HistoryDBProvider.dbase.insertTransaction(transaction);
                       Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.home2, (Route<dynamic> route) => false);
                     }
                     else{
                       if(NewTransaction.alertDialogCount == 0){
                         NewTransaction.alertDialogCount++;
-                        showWarningDialog("Please fill in Amount!", context, (){
+                        showWarningDialog("Please enter appropriate amount!", context, (){
                           if(NewTransaction.alertDialogCount > 0) NewTransaction.alertDialogCount = 0;
                         });
                       }

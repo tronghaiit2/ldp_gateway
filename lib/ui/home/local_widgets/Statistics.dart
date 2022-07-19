@@ -5,12 +5,13 @@ import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart
 import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
 import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Coin.dart';
-import 'package:ldp_gateway/model/Statistic.dart';
+//import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/ui/home/local_widgets/StatisticsTab.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
 import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
+import 'package:ldp_gateway/utils/sqflite_db/coin_db.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:web3dart/web3dart.dart';
@@ -36,23 +37,31 @@ class _StatisticsState extends State<Statistics> {
   void initState() {
     super.initState();
     getData();
-    getStatisticData();
   }
 
-
   Future<void> getData() async {
-    address = (await LDPGateway.client!.credentials.extractAddress()).toString();
+    String address = (await UserPreferences().privatekey) ?? "";
     amount = (await LDPGateway.client!.getBalance()).getInEther;
     token = (await UserPreferences().privatekey)!;
-    if(mounted){
-      setState(() {
-        _initialized = 1;
-      });
+    aaveList = await CoinDBProvider.dbase.getAllCoins(address);
+
+    if(aaveList.isEmpty) {
+      if(mounted){
+        setState(() {
+          _initialized = 1;
+        });
+      }
+      await getStatisticData();
+    } else {
+      if(mounted){
+        setState(() {
+          _initialized = 2;
+        });
+      }
     }
   }
 
   Future<void> getStatisticData() async {
-    aaveList.clear();
     int len = TextConstant.coinCodeList.length;
     int i = 0;
     for(i = 0; i < len; i++){
@@ -67,37 +76,29 @@ class _StatisticsState extends State<Statistics> {
       EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
       AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
 
-      final firstCoinBalance = await coin.checkBalance();
-      final firstACoinBalance = await aCoin.checkBalance();
-      final firstDebtBalance = await debtCoin.checkBalance();
+      final coinBalance = await coin.checkBalance();
+      final aCoinBalance = await aCoin.checkBalance();
+      final debtBalance = await debtCoin.checkBalance();
 
-      if(firstCoinBalance != BigInt.from(0) || firstACoinBalance != BigInt.from(0) || firstDebtBalance != BigInt.from(0)) {
-        aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance.toInt(), firstACoinBalance.toInt(), firstDebtBalance.toInt(), icon));
-      }
+      Coin newCoin = Coin(
+        account: address,
+        pool: "Aave",
+        coin_name: name,
+        coin_code: code,
+        coin_rate: 0,
+        coin_icon: icon,
+        balance: coinBalance.toInt(),
+        deposit: aCoinBalance.toInt(),
+        debt: debtBalance.toInt()
+      );
+      await CoinDBProvider.dbase.insertCoin(newCoin);
     }
-
-    // for(i = 0; i < len; i++){
-    //   String code = TextConstant.coinCodeList[i];
-    //   String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
-    //   String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
-    //
-    //   IERC20 coin = IERC20(TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
-    //
-    //   EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
-    //
-    //   EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
-    //
-    //   final firstCoinBalance = await coin.checkBalance();
-    //   final firstACoinBalance = await aCoin.checkBalance();
-    //   final firstDebtBalance = await debtCoin.checkBalance();
-    //
-    //   compoundList.add(Coin("Compound", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
-    // }
 
     if(i >= len) {
       if(mounted) {
+        if(aaveList.isEmpty) {
+          aaveList = await CoinDBProvider.dbase.getAllCoins(address);
+        }
         setState(() {
           _initialized = 2;
         });

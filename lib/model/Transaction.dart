@@ -6,6 +6,7 @@ class aTransaction {
   late String _coin_code;
   late double _coin_rate;
   late String _coin_icon;
+  late int _coin_id;
   late String _type;
   late int _amount;
   late int _fee;
@@ -19,6 +20,7 @@ class aTransaction {
     required String coin_code,
     required double coin_rate,
     required String coin_icon,
+    required int coin_id,
     required String type,
     required int amount,
     required int fee,
@@ -31,6 +33,7 @@ class aTransaction {
     this._coin_code = coin_code;
     this._coin_rate = coin_rate;
     this._coin_icon = coin_icon;
+    this._coin_id = coin_id;
     this._type = type;
     this._amount = amount;
     this._fee = fee;
@@ -51,6 +54,8 @@ class aTransaction {
   set coin_rate(double coin_rate) => this._coin_rate = coin_rate;
   String get coin_icon => this._coin_icon;
   set coin_icon(String coin_icon) => this._coin_icon = coin_icon;
+  int get coin_id => this._coin_id;
+  set coin_id(int coin_id) => this._coin_id = coin_id;
   String get type => this._type;
   set type(String type) => this._type = type;
   int get amount => this._amount;
@@ -69,6 +74,7 @@ class aTransaction {
     data['coin_code'] = this.coin_code;
     data['coin_rate'] = this.coin_rate;
     data['coin_icon'] = this.coin_icon;
+    data['coin_id'] = this.coin_id;
     data['type'] = this.type;
     data['amount'] = this.amount;
     data['fee'] = this.fee;
@@ -84,6 +90,7 @@ class aTransaction {
     _coin_code = json['coin_code'];
     _coin_rate = json['coin_rate'];
     _coin_icon = json['coin_icon'];
+    _coin_id = json['coin_id'];
     _type = json['type'];
     _amount = json['amount'];
     _fee = json['fee'];
