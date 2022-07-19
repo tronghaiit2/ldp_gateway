@@ -43,9 +43,14 @@ class _StatisticsState extends State<Statistics> {
     String address = (await UserPreferences().privatekey) ?? "";
     amount = (await LDPGateway.client!.getBalance()).getInEther;
     token = (await UserPreferences().privatekey)!;
-    aaveList = await CoinDBProvider.dbase.getAllCoins(address);
+    List<Coin> allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+    for(var coin in allCoin){
+      if(coin.balance != 0 || coin.deposit != 0 || coin.debt != 0) {
+        aaveList.add(coin);
+      }
+    }
 
-    if(aaveList.isEmpty) {
+    if(allCoin.isEmpty) {
       if(mounted){
         setState(() {
           _initialized = 1;
@@ -97,7 +102,12 @@ class _StatisticsState extends State<Statistics> {
     if(i >= len) {
       if(mounted) {
         if(aaveList.isEmpty) {
-          aaveList = await CoinDBProvider.dbase.getAllCoins(address);
+          List<Coin> allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+          for(var coin in allCoin){
+            if(coin.balance != 0 || coin.deposit != 0 || coin.debt != 0) {
+              aaveList.add(coin);
+            }
+          }
         }
         setState(() {
           _initialized = 2;
