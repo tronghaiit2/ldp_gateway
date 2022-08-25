@@ -4,7 +4,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 
 
-Card statisticCard(String coin, BigInt? number, final void Function() func){
+Card statisticCard(String coin, int? number, final void Function() func){
   return Card(
       elevation: 0,
       color: AppColors.gray100,

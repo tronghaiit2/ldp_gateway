@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lazy_load_scrollview/lazy_load_scrollview.dart';
 import 'package:ldp_gateway/model/Coin.dart';
-import 'package:ldp_gateway/model/Statistic.dart';
+//import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/provider/new_transaction/NewTransactionProvider.dart';
 import 'package:ldp_gateway/ui/common_widgets/ResponsiveLayout.dart';
@@ -125,7 +125,7 @@ class _StatisticsTabState extends State<StatisticsTab> {
               width: 60,
               padding: EdgeInsets.only(left: 10),
               alignment: Alignment.center,
-              child: Image.asset(widget.listStatistic[count].icon, height: 50, width: 50, fit: BoxFit.fill),
+              child: Image.asset(widget.listStatistic[count].coin_icon, height: 50, width: 50, fit: BoxFit.fill),
             ),
           ],),
           Expanded(
@@ -149,15 +149,15 @@ class _StatisticsTabState extends State<StatisticsTab> {
                       children:
                       [
                         Container(
-                          child: Text("Số dư", textAlign: TextAlign.center,
+                          child: Text("Balance", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                         Container(
-                          child: Text("Đã gửi", textAlign: TextAlign.center,
+                          child: Text("Deposit", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                         Container(
-                          child: Text("Số nợ", textAlign: TextAlign.center,
+                          child: Text("Debt", textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 14, color: Colors.black),),
                         ),
                       ]
@@ -181,46 +181,13 @@ class _StatisticsTabState extends State<StatisticsTab> {
                     crossAxisCount: 3,
                     children:
                     [
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].balance, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[0], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].balance, () {
                           (){};
                         }),
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].deposit, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[1], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].deposit, () {
                               (){};
                         }),
-                        statisticCard(widget.listStatistic[count].code, widget.listStatistic[count].debt, () {
-                          var transaction = Transaction("Account", widget.listStatistic[count].pool, widget.listStatistic[count].name, widget.listStatistic[count].code,
-                              widget.listStatistic[count].rate,widget.listStatistic[count].icon, TextConstant.transaction_type[2], BigInt.from(0), BigInt.from(0));
-                          // Navigator.push(
-                          //     context,
-                          //     MaterialPageRoute(
-                          //         builder: (BuildContext context) =>
-                          //             MultiProvider(
-                          //                 providers: [
-                          //                   ChangeNotifierProvider(create: (_) => NewTransactionProvider()
-                          //                   ),
-                          //                 ], child: NewTransaction(transaction: transaction))));
+                        statisticCard(widget.listStatistic[count].coin_code, widget.listStatistic[count].debt, () {
                               (){};
                         }),
                     ]

@@ -21,39 +21,21 @@ class UserPreferences {
     return res;
   }
 
-  Future<String?> get token async {
+  Future<String?> get address async {
     final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    final token = _sharePreferences.getString(Preferences.token);
-    return token;
+    final address = _sharePreferences.getString(Preferences.address);
+    return address;
   }
 
-  Future<bool> saveToken (String token) async {
+  Future<bool> saveAddress (String address) async {
     final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    bool res = await _sharePreferences.setString(Preferences.token, token);
+    bool res = await _sharePreferences.setString(Preferences.address, address);
     return res;
   }
 
-  Future<bool> removeToken() async{
+  Future<bool> removeAddress() async{
     final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    bool res = await _sharePreferences.remove(Preferences.token);
-    return res;
-  }
-
-  Future<String?> get user async {
-    final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    final user = _sharePreferences.getString(Preferences.user);
-    return user;
-  }
-
-  Future<bool> saveUser (String user) async {
-    final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    bool res = await _sharePreferences.setString(Preferences.user, user);
-    return res;
-  }
-
-  Future<bool> removeUser() async{
-    final SharedPreferences _sharePreferences = await SharedPreferences.getInstance();
-    bool res = await _sharePreferences.remove(Preferences.user);
+    bool res = await _sharePreferences.remove(Preferences.address);
     return res;
   }
 }

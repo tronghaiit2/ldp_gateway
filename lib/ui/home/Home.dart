@@ -54,21 +54,21 @@ class _HomeState extends State<Home> {
               ),
             ],
             color: AppColors.main_blue,
-            borderRadius: BorderRadius.all(Radius.circular(36))
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36))
         ),
         child: BottomNavigationBar(
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.currency_exchange_rounded,  size: 28),
-              label: "Giao dịch",
+              label: "Transaction",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.newspaper_rounded, size: 28),
-              label: 'Thống kê',
+              label: 'Statistics',
             ),
             BottomNavigationBarItem(
                 icon: Icon(Icons.content_paste, size: 28),
-                label: 'Lịch sử'),
+                label: 'History'),
           ],
           elevation: 0,
           backgroundColor: AppColors.main_blue,

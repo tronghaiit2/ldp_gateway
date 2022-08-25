@@ -4,14 +4,15 @@ class TextConstant {
   //static const String admin = "admin";
 
   static late Map<int, String> pools = {
-    1 : "Compound",
-    2 : "Aave",
+    1 : "Aave",
+    2 : "Compound",
   };
 
-  static const List<String> transaction_type = ["Gửi","Mượn","Trả","Rút"];
+  static const List<String> transaction_type = ["Deposit","Borrow","Repay","Withdraw"];
 
-  static const List<String> coinCodeList = ["WETH","AAVE","BAT","DAI","FEI",
-                                            "TUSD","UNI","USDP","YFI","ZRX"];
+  // static const List<String> coinCodeList = ["WETH","AAVE","BAT","DAI","FEI",
+  //                                           "TUSD","UNI","USDP","YFI","ZRX"];
+  static const List<String> coinCodeList = ["WETH","BAT","DAI", "TUSD","ZRX"];
 
   // Error at MKR
   static const Map<String, String> aaveTokenList = {

@@ -1,26 +1,35 @@
 import 'package:flutter/material.dart';
 
 class NewTransactionProvider extends ChangeNotifier{
-  BigInt? _amount;
-  BigInt? _fee;
+  int? _amount;
+  int? _fee;
   String? amountError;
   String? feeError;
 
-  BigInt get amount => _amount ?? BigInt.from(0);
-  BigInt get fee => _fee ?? BigInt.from(0);
+  int get amount => _amount ?? 0;
+  int get fee => _fee ?? 0;
 
-  BigInt total(){
-    if(_amount != null && _fee != null) {
-      return (_amount! + _fee!);
+  int total(){
+    if(_amount != null) {
+      return (_amount!);
     }
     else{
-      return BigInt.from(0);
+      return 0;
     }
   }
 
+  // int total(){
+  //   if(_amount != null && _fee != null) {
+  //     return (_amount! + _fee!);
+  //   }
+  //   else{
+  //     return int.from(0);
+  //   }
+  // }
+
   void editAmount(String txt){
-    if(BigInt.tryParse(txt) != null){
-      _amount = BigInt.tryParse(txt);
+    if(int.tryParse(txt) != null){
+      _amount = int.tryParse(txt);
       amountError = null;
     }
     else {
@@ -29,11 +38,11 @@ class NewTransactionProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
-  void editFee(String txt, BigInt baseFee){
-    if(BigInt.tryParse(txt) != null){
-      baseFee = BigInt.from(0);
-      if(BigInt.tryParse(txt)! >= baseFee) {
-        _fee = BigInt.tryParse(txt);
+  void editFee(String txt, int baseFee){
+    if(int.tryParse(txt) != null){
+      baseFee = 0;
+      if(int.tryParse(txt)! >= baseFee) {
+        _fee = int.tryParse(txt);
         feeError = null;
       }
       else {
@@ -47,8 +56,13 @@ class NewTransactionProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+  // bool isValid() {
+  //   if (_amount != null && _fee != null) return true;
+  //   return false;
+  // }
+
   bool isValid() {
-    if (_amount != null && _fee != null) return true;
+    if (_amount != null) return true;
     return false;
   }
 

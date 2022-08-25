@@ -5,12 +5,13 @@ import 'package:ldp_gateway/blockchain/contracts/debt_token/aave_debt_token.dart
 import 'package:ldp_gateway/blockchain/contracts/ierc20.dart';
 import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Coin.dart';
-import 'package:ldp_gateway/model/Statistic.dart';
+//import 'package:ldp_gateway/model/Statistic.dart';
 import 'package:ldp_gateway/route.dart';
 import 'package:ldp_gateway/ui/home/local_widgets/StatisticsTab.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
 import 'package:ldp_gateway/utils/constant/TextConstant.dart';
 import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
+import 'package:ldp_gateway/utils/sqflite_db/coin_db.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:web3dart/web3dart.dart';
@@ -23,16 +24,11 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
-  bool _initialized = false;
+  int _initialized = 0;
 
   late String address = 'address';
   late BigInt amount;
   late String token = 'token';
-
-  late Map<int, String> pools = {
-    1 : "Compound",
-    2 : "Aave",
-  };
 
   late List<Coin> compoundList = [];
   late List<Coin> aaveList = [];
@@ -41,20 +37,36 @@ class _StatisticsState extends State<Statistics> {
   void initState() {
     super.initState();
     getData();
-    getStatisticData();
   }
 
-
   Future<void> getData() async {
+    String address = (await UserPreferences().privatekey) ?? "";
     amount = (await LDPGateway.client!.getBalance()).getInEther;
     token = (await UserPreferences().privatekey)!;
-    // setState(() {
-    //   _initialized = true;
-    // });
+    List<Coin> allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+    for(var coin in allCoin){
+      if(coin.balance != 0 || coin.deposit != 0 || coin.debt != 0) {
+        aaveList.add(coin);
+      }
+    }
+
+    if(allCoin.isEmpty) {
+      if(mounted){
+        setState(() {
+          _initialized = 1;
+        });
+      }
+      await getStatisticData();
+    } else {
+      if(mounted){
+        setState(() {
+          _initialized = 2;
+        });
+      }
+    }
   }
 
   Future<void> getStatisticData() async {
-    aaveList.clear();
     int len = TextConstant.coinCodeList.length;
     int i = 0;
     for(i = 0; i < len; i++){
@@ -69,38 +81,36 @@ class _StatisticsState extends State<Statistics> {
       EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Aave", TextConstant.aaveTokenList[TextConstant.coinCodeList[i]] ?? "");
       AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
 
-      final firstCoinBalance = await coin.checkBalance();
-      final firstACoinBalance = await aCoin.checkBalance();
-      final firstDebtBalance = await debtCoin.checkBalance();
+      final coinBalance = await coin.checkBalance();
+      final aCoinBalance = await aCoin.checkBalance();
+      final debtBalance = await debtCoin.checkBalance();
 
-      //if(firstCoinBalance != 0 || firstACoinBalance != 0 firstDebtBalance != 0)
-      aaveList.add(Coin("Aave", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
+      Coin newCoin = Coin(
+        account: address,
+        pool: "Aave",
+        coin_name: name,
+        coin_code: code,
+        coin_rate: 0,
+        coin_icon: icon,
+        balance: coinBalance.toInt(),
+        deposit: aCoinBalance.toInt(),
+        debt: debtBalance.toInt()
+      );
+      await CoinDBProvider.dbase.insertCoin(newCoin);
     }
-
-    // for(i = 0; i < len; i++){
-    //   String code = TextConstant.coinCodeList[i];
-    //   String name = TextConstant.coinNameList[TextConstant.coinCodeList[i]] ?? "";
-    //   String icon = TextConstant.coinIconList[TextConstant.coinCodeList[i]] ?? "";
-    //
-    //   IERC20 coin = IERC20(TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "", LDPGateway.client!);
-    //
-    //   EthereumAddress aCoinAddress = await LDPGateway.poolGW.getReverse("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   IERC20 aCoin = IERC20(aCoinAddress.hex, LDPGateway.client!);
-    //
-    //   EthereumAddress debtCoinAddress = await LDPGateway.poolGW.getDebt("Compound", TextConstant.compoundTokenList[TextConstant.coinCodeList[i]] ?? "");
-    //   AaveDebtToken debtCoin = AaveDebtToken(debtCoinAddress.hex, LDPGateway.client!);
-    //
-    //   final firstCoinBalance = await coin.checkBalance();
-    //   final firstACoinBalance = await aCoin.checkBalance();
-    //   final firstDebtBalance = await debtCoin.checkBalance();
-    //
-    //   compoundList.add(Coin("Compound", name, code, 0, firstCoinBalance, firstACoinBalance, firstDebtBalance, icon));
-    // }
 
     if(i >= len) {
       if(mounted) {
+        if(aaveList.isEmpty) {
+          List<Coin> allCoin = await CoinDBProvider.dbase.getAllCoins(address);
+          for(var coin in allCoin){
+            if(coin.balance != 0 || coin.deposit != 0 || coin.debt != 0) {
+              aaveList.add(coin);
+            }
+          }
+        }
         setState(() {
-          _initialized = true;
+          _initialized = 2;
         });
       }
     }
@@ -120,12 +130,6 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-    if(!_initialized) {
-      return SpinKitCircle(
-        color: AppColors.red,
-        size: 50,
-      );
-    }
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -148,19 +152,32 @@ class _StatisticsState extends State<Statistics> {
           // give the app bar rounded corners
           iconTheme: IconThemeData(color: AppColors.white),
         ),
-        body: Column(
+        body:
+        _initialized == 0 ? const Center(
+          child: SpinKitCircle(
+            color: AppColors.red,
+            size: 50,
+          ),
+        ) :
+        Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             headerInformation(),
             tabBarLabel(),
             Expanded(
-              child: TabBarView(
-                children: [
-                  StatisticsTab(statistic_type: 0, listStatistic: compoundList),
-                  StatisticsTab(statistic_type: 1, listStatistic: aaveList),
-                ],
-              ),
-            )
+                child:
+                _initialized  == 2 ?TabBarView(
+                  children: [
+                    StatisticsTab(statistic_type: 1, listStatistic: aaveList),
+                    StatisticsTab(statistic_type: 2, listStatistic: compoundList),
+                  ],
+                ) : const Center(
+                  child: SpinKitCircle(
+                    color: AppColors.red,
+                    size: 50,
+                  ),
+                )
+              )
           ],
         ),
       ),
@@ -201,9 +218,9 @@ class _StatisticsState extends State<Statistics> {
               padding: EdgeInsets.all(10),
               child: CircleAvatar(foregroundImage: AssetImage('assets/images/home_image.jpg')),
             ),
-            // Text(address, textAlign: TextAlign.left,
-            //     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
-            //     overflow: TextOverflow.ellipsis),
+            Text(address.substring(0,5) + '...' + address.substring(address.length - 5,address.length), textAlign: TextAlign.left,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.blue,),
+                overflow: TextOverflow.ellipsis),
             Text(amount.toString() + ' ETH', textAlign: TextAlign.left,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.main_blue,),
                 overflow: TextOverflow.ellipsis),
@@ -254,10 +271,10 @@ class _StatisticsState extends State<Statistics> {
         unselectedLabelColor: AppColors.checkboxBorder,
         tabs: [
           Tab(
-            text: pools[1]!,
+            text: TextConstant.pools[1]!,
           ),
           Tab(
-            text: pools[2]!,
+            text: TextConstant.pools[2]!,
           ),
         ],
       ),

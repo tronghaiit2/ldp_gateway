@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:ldp_gateway/main.dart';
 import 'package:ldp_gateway/model/Transaction.dart';
 import 'package:ldp_gateway/ui/history/local_widgets/detailHistory.dart';
 import 'package:ldp_gateway/utils/constant/ColorConstant.dart';
+import 'package:ldp_gateway/utils/share_preferences/login/UserPreferences.dart';
+import 'package:ldp_gateway/utils/sqflite_db/transaction_history_db.dart';
 
 class History extends StatefulWidget {
   const History({Key? key}) : super(key: key);
@@ -11,14 +15,25 @@ class History extends StatefulWidget {
 }
 
 class _HistoryState extends State<History> {
-  late List<Transaction> listTransaction = [
-    Transaction("Account", "Compound", "Bitcoin", "BTC", 19039.23, "assets/images/coins/bitcoin.png", "GỬI",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "RÚT",  BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Aave", "BNB", "BNB", 200.23, "assets/images/coins/bnb.png", "MƯỢN", BigInt.from(0), BigInt.from(0)),
-    Transaction("Account", "Compound", "Ethereum", "ETH", 998.02, "assets/images/coins/ethereum.png", "TRẢ",  BigInt.from(0), BigInt.from(0)),
-  ];
+  late List<aTransaction> listTransaction = [];
 
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  Future<void> getData() async {
+    String address = (await UserPreferences().address) ?? "";
+    listTransaction = await HistoryDBProvider.dbase.getAllTransactions(address);
+    if(mounted){
+      setState(() {
+        _initialized = true;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     WidgetsFlutterBinding.ensureInitialized();
@@ -28,15 +43,23 @@ class _HistoryState extends State<History> {
         centerTitle: true,
         backgroundColor: AppColors.white,
         toolbarHeight: 50,
-        title: Text("Lịch sử", style: TextStyle(
+        title: Text("Transaction History", style: TextStyle(
             fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.main_blue)),
-        elevation: 0,
+        elevation: 1,
         automaticallyImplyLeading: false,
       ),
-      body: Container(
+      body:
+      _initialized == 0 ? const Center(
+        child: SpinKitCircle(
+          color: AppColors.red,
+          size: 50,
+        ),
+      ) :
+        Container(
           decoration: BoxDecoration(
             color: AppColors.white,
           ),
+          width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           padding: EdgeInsets.only(left: 15, right: 15),
           child: SingleChildScrollView(

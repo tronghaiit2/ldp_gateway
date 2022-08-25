@@ -24,7 +24,7 @@ class AuthProvider extends ChangeNotifier{
     }
     else {
       password = null;
-      passwordError = "Mật khẩu là private key!";
+      passwordError = "Please fill in private key!";
     }
     notifyListeners();
   }

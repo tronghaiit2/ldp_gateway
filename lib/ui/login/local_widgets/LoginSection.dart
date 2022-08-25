@@ -88,7 +88,7 @@ class _LoginSectionState extends State<LoginSection> {
           Container(
               margin: EdgeInsets.only(top: 50, bottom: 50),
               alignment: Alignment.topCenter,
-              child: Text("Đăng nhập", style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.normal, fontSize: 40, color: AppColors.main_blue))
+              child: Text("Activate", style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.normal, fontSize: 40, color: AppColors.main_blue))
           ),
           Container(
             height: 100,
@@ -104,14 +104,14 @@ class _LoginSectionState extends State<LoginSection> {
           SafeArea(
               child: Container(
                 padding: EdgeInsets.only(top: 50, bottom: 50),
-                child: selectButton("ĐĂNG NHẬP", (){
+                child: selectButton("ACTIVATE", (){
                   if(_authProvider.isValid()) {
                     _login();
                   }
                   else{
                     if(LoginSection.alertDialogCount == 0){
                       LoginSection.alertDialogCount++;
-                      showWarningDialog("Hãy nhập các trường bỏ trống", context, (){
+                      showWarningDialog("Please, fill private key!", context, (){
                         if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
                       });
                     }
@@ -193,7 +193,7 @@ class _LoginSectionState extends State<LoginSection> {
         obscureText: _loginProvider.visible,
         cursorColor: AppColors.checkboxBorder,
         keyboardType: TextInputType.text,
-        decoration: textFieldvsIconInputDecoration('Mật khẩu', 'Mật khẩu', _authProvider.passwordError, _loginProvider.visible, (){
+        decoration: textFieldvsIconInputDecoration('Private Key', 'Private Key', _authProvider.passwordError, _loginProvider.visible, (){
           _loginProvider.setVisible();
         }),
         onChanged: (value) {
@@ -238,18 +238,20 @@ class _LoginSectionState extends State<LoginSection> {
             isChecked = isChecked? false : true;
           });
         },
-        child: Text("Nhớ đăng nhập", style: TextStyle(fontSize: 16, color: Colors.black)),
+        child: Text("Remember me", style: TextStyle(fontSize: 16, color: Colors.black)),
       ),
     ]);
   }
 
   void _login() async {
     try {
+      showLoading(context);
       LDPGateway.client = EthClient(_authProvider.password!, Address.RPC_URL);
       if(LDPGateway.client == null) {
         if(LoginSection.alertDialogCount == 0){
+          Navigator.of(context).pop();
           LoginSection.alertDialogCount++;
-          showWarningDialog("Private key không đúng!", context, (){
+          showWarningDialog("Wrong private key!!", context, (){
             if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
           });
         }
@@ -258,16 +260,20 @@ class _LoginSectionState extends State<LoginSection> {
         if(etherAmount.getInEther != 0) {
           print("ok");
           await UserPreferences().savePrivatekey(_authProvider.password!);
+          String address = (await LDPGateway.client!.credentials.extractAddress()).toString();
+          await UserPreferences().saveAddress(address);
           LDPGateway.poolGW = PoolGW(Address.POOL_GW, LDPGateway.client!);
           Address.POOL["Aave"] = (await LDPGateway.poolGW.getGatewayAddress("Aave")).hex;
+          Navigator.of(context).pop();
           Navigator.of(context).pushNamedAndRemoveUntil(
               Routes.home1, (Route<dynamic> route) => false);
         }
         else {
           print("none");
           if(LoginSection.alertDialogCount == 0){
+            Navigator.of(context).pop();
             LoginSection.alertDialogCount++;
-            showWarningDialog("Private key không đúng!", context, (){
+            showWarningDialog("Wrong private key!", context, (){
               if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
             });
           }
@@ -276,8 +282,9 @@ class _LoginSectionState extends State<LoginSection> {
     }
     on Exception catch(_){
       if(LoginSection.alertDialogCount == 0){
+        Navigator.of(context).pop();
         LoginSection.alertDialogCount++;
-        showWarningDialog("Private key không đúng!", context, (){
+        showWarningDialog("Wrong private key!", context, (){
           if(LoginSection.alertDialogCount > 0) LoginSection.alertDialogCount = 0;
         });
       }
